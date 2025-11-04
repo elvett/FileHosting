@@ -1,0 +1,14 @@
+#!/bin/sh
+echo "start pre push"
+
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+nmp run build
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+echo "end"

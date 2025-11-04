@@ -1,0 +1,12 @@
+#!/bin/sh
+echo "start pre commit"
+
+npx eslint .
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+npx prettier --check .
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+echo "end"

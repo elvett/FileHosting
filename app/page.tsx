@@ -82,8 +82,7 @@ export default async function Home() {
 
           <div className="space-y-4">
             <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-              <div className="mt-2 w-full bg-white/10 rounded-full h-2">
-              </div>
+              <div className="mt-2 w-full bg-white/10 rounded-full h-2"></div>
             </div>
 
             <Link

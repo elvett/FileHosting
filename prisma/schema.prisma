@@ -24,9 +24,11 @@ model User {
 }
 
 model Files {
+  type      String
+  size      Int
   id        Int      @id @default(autoincrement())
   privacy   Boolean  @default(true)
-  hash      String   @unique
+  uuid      String   @unique
   ownerId   Int
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

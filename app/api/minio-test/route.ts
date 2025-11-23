@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { minioClient } from "@/lib/minio/minio";
+import { minioClient } from "@/lib/minio";
 
 export async function GET() {
   try {

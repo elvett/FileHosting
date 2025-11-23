@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronsUpDown, Plus, Upload, FileText } from "lucide-react"
+import * as React from "react";
+import { ChevronsUpDown, Plus, Upload, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,56 +9,57 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-import { toast } from "sonner"
+import { toast } from "sonner";
 
 export function Uploadfile() {
-  const { isMobile } = useSidebar()
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const { isMobile } = useSidebar();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const formData = new FormData()
-    formData.append("file", file)
+    const formData = new FormData();
+    formData.append("file", file);
 
-
-    const toastId = toast.loading("Uploading...", { description: "Please wait" })
+    const toastId = toast.loading("Uploading...", {
+      description: "Please wait",
+    });
 
     try {
       const response = await fetch("/api/files/upload", {
         method: "POST",
         body: formData,
-      })
+      });
 
-      if (!response.ok) throw new Error("Upload failed")
-      await response.json()
+      if (!response.ok) throw new Error("Upload failed");
+      await response.json();
 
       toast.success("Success", {
         id: toastId,
         description: "File uploaded successfully",
-      })
+      });
     } catch (error) {
       toast.error("Error", {
         id: toastId,
         description: "File upload failed",
-      })
+      });
     } finally {
-      e.target.value = ""
+      e.target.value = "";
     }
-  }
+  };
 
   return (
     <>
@@ -100,8 +101,8 @@ export function Uploadfile() {
 
               <DropdownMenuItem
                 onSelect={(e) => {
-                  e.preventDefault()
-                  handleUploadClick()
+                  e.preventDefault();
+                  handleUploadClick();
                 }}
               >
                 <Upload className="mr-2 size-4" />
@@ -117,5 +118,5 @@ export function Uploadfile() {
         </SidebarMenuItem>
       </SidebarMenu>
     </>
-  )
+  );
 }

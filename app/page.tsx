@@ -1,6 +1,6 @@
-import { Toaster } from "@/components/ui/sonner"
-import { getUserFromCookie } from "@/lib/getUserFromCookie"
-import { AppSidebar } from "@/components/app-sidebar"
+import { Toaster } from "@/components/ui/sonner";
+import { getUserFromCookie } from "@/lib/getUserFromCookie";
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,20 +8,19 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { redirect } from "next/navigation"
+} from "@/components/ui/sidebar";
+import { redirect } from "next/navigation";
 
 export default async function Page() {
-  
-  const user = await getUserFromCookie()
+  const user = await getUserFromCookie();
   if (!user) {
-    redirect("/register")
+    redirect("/register");
   }
 
   return (
@@ -46,5 +45,5 @@ export default async function Page() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

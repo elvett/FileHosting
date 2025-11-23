@@ -11,7 +11,7 @@ export interface AuthUser {
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function getUserFromToken(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<AuthUser | null> {
   const token = request.cookies.get("token")?.value;
 
@@ -19,7 +19,7 @@ export async function getUserFromToken(
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as AuthUser;
-    
+
     // Optional: double-check user still exists in DB (prevents stale tokens)
     const user = await db.user.findUnique({
       where: { id: payload.userId },

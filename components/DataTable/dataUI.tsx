@@ -45,7 +45,7 @@ export default function TablePage() {
 
 function formatDate(date: string | number) {
   const d = new Date(date);
-  return d.toLocaleDateString("ru-RU"); 
+  return d.toLocaleDateString("ru-RU");
 }
 
 function formatSize(bytes: number) {

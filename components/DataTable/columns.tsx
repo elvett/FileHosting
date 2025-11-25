@@ -1,24 +1,29 @@
 "use client";
-import { Ghost, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 export type File = {
+  uuid: string,
   name: string;
   size: number;
   privacy: boolean;
   type: string;
   date: string;
+};
+const handleDownload = (uuid: string, filename: string) => {
+  const downloadUrl = `/api/files/download/${uuid}`; 
+  window.location.href = downloadUrl; 
+  toast("download started")
 };
 
 export const columns: ColumnDef<File>[] = [
@@ -88,7 +93,7 @@ export const columns: ColumnDef<File>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(file.name)}
+              onClick={() => handleDownload(file.uuid, file.name)}
             >
               Download
             </DropdownMenuItem>

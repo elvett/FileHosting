@@ -6,7 +6,7 @@ import { getUserFromToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getUserFromToken(req);
+    const user = await getUserFromToken();
     const userId = user?.userId;
 
     if (!userId) {
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const uniqueName = uuidv4();
+    const filename = file.name;
     const fileSize = file.size;
     const fileType = file.type;
     const FILESBUCKET = process.env.FILESBUCKET;
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
 
     const newFile = await db.files.create({
       data: {
+        name: filename,
         uuid: uniqueName,
         size: fileSize,
         type: fileType,

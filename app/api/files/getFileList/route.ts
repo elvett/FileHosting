@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 type FileEntry = {
+  uuid: string
   type: string;
   name: string;
   // extension: string;
@@ -34,6 +35,7 @@ export async function GET(
     const files = await db.files.findMany({
       where: { ownerId: userId },
       select: {
+        uuid: true,
         name: true,
         type: true,
         size: true,
@@ -46,6 +48,7 @@ export async function GET(
       const name = f.name;
 
       return {
+        uuid: f.uuid,
         type: f.type,
         name,
         // extension,

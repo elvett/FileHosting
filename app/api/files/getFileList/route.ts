@@ -2,7 +2,7 @@ import { getUserFromToken } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-type NewType = {
+type FileEntry = {
   type: string;
   name: string;
   // extension: string;
@@ -13,7 +13,7 @@ type NewType = {
 
 interface DataResponse {
   message: string;
-  files: NewType[];
+  files: FileEntry[];
 }
 
 interface ErrorResponse {
@@ -21,10 +21,10 @@ interface ErrorResponse {
 }
 
 export async function GET(
-  req: NextRequest
+  req: NextRequest,
 ): Promise<NextResponse<DataResponse | ErrorResponse>> {
   try {
-    const user = await getUserFromToken(req);
+    const user = await getUserFromToken();
     const userId = user?.userId;
 
     if (!userId) {
@@ -34,34 +34,31 @@ export async function GET(
     const files = await db.files.findMany({
       where: { ownerId: userId },
       select: {
-        type: true,      
+        name: true,
+        type: true,
         size: true,
         privacy: true,
         createdAt: true,
       },
     });
 
-    const parsedFiles = files.map(f => {
-      const [type, fullName] = f.type.split("/");
-      const parts = fullName?.split(".") || [];
-      const name = parts.slice(0, -1).join(".") || fullName;
-      // const extension = parts.length > 1 ? parts[parts.length - 1] : "";
-      
+    const parsedFiles: FileEntry[] = files.map((f) => {
+      const name = f.name;
+
       return {
-        type: type,
+        type: f.type,
         name,
         // extension,
         size: f.size,
         privacy: f.privacy,
-        date: f.createdAt.getTime(), 
+        date: f.createdAt.getTime(),
       };
     });
 
     return NextResponse.json(
       { message: "Files loaded successfully", files: parsedFiles },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

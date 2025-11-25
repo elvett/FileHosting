@@ -1,7 +1,6 @@
-// src/lib/auth.ts
-import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 import { db } from "@/lib/db";
+import { cookies } from "next/headers";
 
 export interface AuthUser {
   userId: number;
@@ -10,17 +9,14 @@ export interface AuthUser {
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-export async function getUserFromToken(
-  request: NextRequest,
-): Promise<AuthUser | null> {
-  const token = request.cookies.get("token")?.value;
+export async function getUserFromToken(): Promise<AuthUser | null> {
+  const token = (await cookies()).get("token")?.value;
 
   if (!token) return null;
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as AuthUser;
 
-    // Optional: double-check user still exists in DB (prevents stale tokens)
     const user = await db.user.findUnique({
       where: { id: payload.userId },
       select: { id: true, uniqName: true },
@@ -33,6 +29,6 @@ export async function getUserFromToken(
       uniqName: user.uniqName,
     };
   } catch (error) {
-    return null; // invalid or expired token
+    return null;
   }
 }

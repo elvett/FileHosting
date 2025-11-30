@@ -1,9 +1,9 @@
 import { getUserFromToken } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 type FileEntry = {
-  uuid: string
+  uuid: string;
   type: string;
   name: string;
   // extension: string;
@@ -21,9 +21,9 @@ interface ErrorResponse {
   error: string;
 }
 
-export async function GET(
-  req: NextRequest,
-): Promise<NextResponse<DataResponse | ErrorResponse>> {
+export async function GET(): Promise<
+  NextResponse<DataResponse | ErrorResponse>
+> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
@@ -39,7 +39,7 @@ export async function GET(
         name: true,
         type: true,
         size: true,
-        privacy: true,
+        private: true,
         createdAt: true,
       },
     });
@@ -53,7 +53,7 @@ export async function GET(
         name,
         // extension,
         size: f.size,
-        privacy: f.privacy,
+        privacy: f.private,
         date: f.createdAt.getTime(),
       };
     });

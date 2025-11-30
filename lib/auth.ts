@@ -28,7 +28,7 @@ export async function getUserFromToken(): Promise<AuthUser | null> {
       userId: user.id,
       uniqName: user.uniqName,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

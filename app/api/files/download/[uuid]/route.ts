@@ -25,9 +25,7 @@ export async function GET(
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+   
     const Params = await params;
     const fileUuid = Params.uuid;
     if (!fileUuid) {
@@ -39,7 +37,7 @@ export async function GET(
       select: {
         name: true,
         ownerId: true,
-        privacy: true,
+        private: true,
       },
     });
 
@@ -47,7 +45,7 @@ export async function GET(
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
-    if (file.privacy && file.ownerId !== userId) {
+    if (file.private && file.ownerId !== userId) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -71,6 +69,9 @@ export async function GET(
     });
   } catch (error) {
     console.error("DOWNLOAD ERROR:", error);
-    return NextResponse.json({ error: "File download failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "File download failed" },
+      { status: 500 },
+    );
   }
 }

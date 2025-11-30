@@ -15,11 +15,11 @@ datasource db {
 
 model User {
   id           Int      @id @default(autoincrement())
-  name         String?
   uniqName     String   @unique
   email        String?  
   hashPassword String
   files        Files[]
+  folders      Folder[]       
   createdAt    DateTime @default(now())
 }
 
@@ -32,5 +32,24 @@ model Files {
   uuid      String   @unique
   ownerId   Int
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  folderId  Int?
+  folder    Folder?  @relation(fields: [folderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+
+model Folder {
+  id        Int       @id @default(autoincrement())
+  name      String
+  ownerId   Int
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  parentId  Int?
+  parent    Folder?   @relation("FolderToParent", fields: [parentId], references: [id])
+  children  Folder[]  @relation("FolderToParent")
+
+  files     Files[]
   createdAt DateTime @default(now())
 }

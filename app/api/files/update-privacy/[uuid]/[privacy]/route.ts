@@ -31,7 +31,7 @@ export async function POST(
 
     const Params = await params;
     const fileUuid = Params.uuid;
-    const letprivacy = Params.privacy === "true";
+    const letprivacy = Params.privacy === "1";
 
     if (!fileUuid) {
       return NextResponse.json({ error: "UUID is required" }, { status: 400 });

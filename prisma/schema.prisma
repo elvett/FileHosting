@@ -45,6 +45,8 @@ model Folder {
   name      String
   ownerId   Int
   owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  size      Int
+  private   Boolean  @default(true)
 
   parentId  Int?
   parent    Folder?   @relation("FolderToParent", fields: [parentId], references: [id])

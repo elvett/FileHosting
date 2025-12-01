@@ -4,6 +4,7 @@ import { minioClient } from "@/lib/minio";
 import { v4 as uuidv4 } from "uuid";
 import { getUserFromToken } from "@/lib/auth";
 
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getUserFromToken();
@@ -15,6 +16,8 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    
+    const folderid = formData.get("folderId") as number | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -49,6 +52,7 @@ export async function POST(req: NextRequest) {
 
     const newFile = await db.files.create({
       data: {
+        folderId: folderid,
         name: filename,
         uuid: uniqueName,
         size: fileSize,

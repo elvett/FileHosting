@@ -11,10 +11,17 @@ type FileEntry = {
   privacy: boolean;
   date: number;
 };
+type FolderEntry = {
+  name: string;
+  size: number;
+  privacy: boolean;
+  date: number;
+}
 
 interface DataResponse {
   message: string;
   files: FileEntry[];
+  folders?: FolderEntry[];
 }
 
 interface ErrorResponse {
@@ -44,6 +51,26 @@ export async function GET(): Promise<
       },
     });
 
+      const folders = await db.folder.findMany({
+      where: { ownerId: userId },
+      select: {
+        name: true,
+        private: true,
+        createdAt: true,
+        size: true,
+      },
+    });
+
+    const parsedFolders: FolderEntry[] = folders.map((f) => {
+
+      return {
+        name: f.name,
+        size: f.size,
+        privacy: f.private,
+        date: f.createdAt.getTime(),
+      };
+    });
+
     const parsedFiles: FileEntry[] = files.map((f) => {
       const name = f.name;
 
@@ -59,7 +86,7 @@ export async function GET(): Promise<
     });
 
     return NextResponse.json(
-      { message: "Files loaded successfully", files: parsedFiles },
+      { message: "Files loaded successfully", files: parsedFiles, folders: parsedFolders},
       { status: 200 },
     );
   } catch (error) {

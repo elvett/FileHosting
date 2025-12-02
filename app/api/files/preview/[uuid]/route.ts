@@ -6,6 +6,17 @@ import { db } from "@/lib/db";
 const FILES_BUCKET = process.env.FILES_BUCKET || "files";
 const EXPIRY_SECONDS = 60 * 5; 
 
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/svg+xml',
+  'application/pdf',
+  'text/plain',
+  'video/mp4',
+  'audio/mpeg',
+];
+
 export interface FilePreviewResponse {
   url: string;
 }
@@ -33,8 +44,7 @@ export async function GET(
     if (!userId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const Params = await params
-    const fileUuid = Params.uuid;
+    const fileUuid = params.uuid;
     if (!fileUuid) {
       return NextResponse.json({ error: "UUID is required" }, { status: 400 });
     }
@@ -44,6 +54,7 @@ export async function GET(
       select: {
         ownerId: true,
         private: true,
+        type: true, 
       },
     });
 
@@ -54,6 +65,16 @@ export async function GET(
     if (file.private && file.ownerId !== userId) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
+
+    const fileMimeType = file.type?.toLowerCase();
+
+    if (!fileMimeType || !ALLOWED_MIME_TYPES.includes(fileMimeType)) {
+        return NextResponse.json(
+            { error: `Preview is not available for this file type: ${fileMimeType}` }, 
+            { status: 400 }
+        );
+    }
+
 
     const presignedUrl = await minioClient.presignedGetObject(
       FILES_BUCKET, 

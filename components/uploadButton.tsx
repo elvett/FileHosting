@@ -39,7 +39,7 @@ export function Uploadfile() {
     });
 
     try {
-      const response = await fetch("/api/files/upload", {
+      const response = await fetch("/api/files/upload/home", {
         method: "POST",
         body: formData,
       });

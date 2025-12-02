@@ -16,7 +16,7 @@ import {
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
-import { Uploadfile } from "./switcher";
+import { Uploadfile } from "./uploadButton";
 import {
   Sidebar,
   SidebarContent,

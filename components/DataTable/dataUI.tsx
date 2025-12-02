@@ -12,7 +12,7 @@ export default function TablePage() {
   useEffect(() => {
     async function fetchFiles() {
       try {
-        const res = await fetch("/api/files/getFileList");
+        const res = await fetch("/api/files/getList/home");
         if (!res.ok) throw new Error(`Error: ${res.status}`);
         const json = await res.json();
 

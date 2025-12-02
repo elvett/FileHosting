@@ -19,7 +19,11 @@ import {
 
 import { toast } from "sonner";
 
-export function Uploadfile() {
+interface Uploadfile {
+  folderUuid: string;
+}
+
+export function Uploadfile({ folderUuid }:Uploadfile) {
   const { isMobile } = useSidebar();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -39,7 +43,7 @@ export function Uploadfile() {
     });
 
     try {
-      const response = await fetch("/api/files/upload/home", {
+      const response = await fetch(`/api/files/upload/${folderUuid}`, {
         method: "POST",
         body: formData,
       });

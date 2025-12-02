@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { DataTable } from "./data-table";
 import { columns, File } from "./columns";
 
-export default function TablePage() {
+interface TablePageProps {
+  folderUuid: string;
+}
+
+export default function TablePage({ folderUuid }: TablePageProps) {
   const [data, setData] = useState<File[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +16,7 @@ export default function TablePage() {
   useEffect(() => {
     async function fetchFiles() {
       try {
-        const res = await fetch("/api/files/getList/home");
+        const res = await fetch(`/api/files/getList/${folderUuid}`);
         if (!res.ok) throw new Error(`Error: ${res.status}`);
         const json = await res.json();
 
@@ -26,7 +30,6 @@ export default function TablePage() {
         const folders = (json.folders || []).map((f: any) => ({
           ...f,
           kind: "folder",
-          uuid: null,
           type: "folder",
           size: formatSize(f.size),
           date: formatDate(f.date),
@@ -41,7 +44,7 @@ export default function TablePage() {
     }
 
     fetchFiles();
-  }, []);
+  }, [folderUuid]);
 
   if (loading) return <div className="p-4">Loading files...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;

@@ -25,6 +25,10 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
+interface Sidebar {
+  folderUuid: string;
+}
+
 // This is sample data.
 const data = {
   user: {
@@ -32,23 +36,6 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
       title: "MAin",
@@ -90,11 +77,11 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ folderUuid, ...props }: { folderUuid: string } & React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <Uploadfile></Uploadfile>
+        <Uploadfile folderUuid={folderUuid}></Uploadfile>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

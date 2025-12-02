@@ -77,7 +77,10 @@ const data = {
   ],
 };
 
-export function AppSidebar({ folderUuid, ...props }: { folderUuid: string } & React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  folderUuid,
+  ...props
+}: { folderUuid: string } & React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

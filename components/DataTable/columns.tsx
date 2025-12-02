@@ -1,5 +1,5 @@
 "use client";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Folder, FileIcon } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+
 import {
   Dialog,
   DialogTrigger,
@@ -27,12 +28,13 @@ import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 
 export type File = {
-  uuid: string;
+  uuid: string | null;
   name: string;
-  size: number;
+  size: string;
   privacy: boolean;
   type: string;
   date: string;
+  kind: "file" | "folder";   // ❤️ Новое поле
 };
 
 const handleDownload = (uuid: string, filename: string) => {
@@ -74,66 +76,97 @@ const handleRemove = async (uuid: string, filename: string) => {
 export const columns: ColumnDef<File>[] = [
   {
     accessorKey: "name",
-    header: ({ column }) => {
-      return (
+    header: ({ column }) => (
       <Button
         variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Name
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
+    ),
+    cell: ({ row }) => {
+      const item = row.original;
+
+      return (
+        <div className="flex items-center gap-2">
+          {item.kind === "folder" ? (
+            <Folder className="w-4 h-4 text-yellow-600" />
+          ) : (
+            <FileIcon className="w-4 h-4" />
+          )}
+          <span>{item.name}</span>
+        </div>
       );
     },
   },
+
   {
     accessorKey: "size",
-    header: ({ column }) => {
-      return (
+    header: ({ column }) => (
       <Button
         variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Size
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
-      );
+    ),
+    cell: ({ row }) => {
+      const item = row.original;
+
+      return item.kind === "folder" ? "—" : item.size;
     },
   },
+
   {
     accessorKey: "privacy",
-    header: ({ column }) => {
-      return (
-      <Button
-        variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Private
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-      );
+    header: "Private",
+    cell: ({ row }) => {
+      const item = row.original;
+
+      return item.kind === "folder"
+        ? "—"
+        : item.privacy
+        ? "Yes"
+        : "No";
     },
   },
+
   {
     accessorKey: "type",
     header: "Type",
+    cell: ({ row }) => {
+      return row.original.kind === "folder"
+        ? "Folder"
+        : row.original.type;
+    },
   },
+
   {
     accessorKey: "date",
     header: "Date",
   },
+
   {
     id: "actions",
     cell: ({ row }) => {
       const file = row.original;
-      const [isPublic, setIsPublic] = useState(!file.privacy); 
+      if (file.kind === "folder") {
+        return (
+          <div className="text-sm text-muted-foreground">
+            —
+          </div>
+        );
+      }
+
+      const [isPublic, setIsPublic] = useState(!file.privacy);
 
       return (
         <Dialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -142,11 +175,10 @@ export const columns: ColumnDef<File>[] = [
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
               <DropdownMenuItem
-                onClick={() => handleDownload(file.uuid, file.name)}
+                onClick={() => handleDownload(file.uuid!, file.name)}
               >
                 Download
               </DropdownMenuItem>
-
 
               <DialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -155,7 +187,7 @@ export const columns: ColumnDef<File>[] = [
               </DialogTrigger>
 
               <DropdownMenuItem
-                onClick={() => handleRemove(file.uuid, file.name)}
+                onClick={() => handleRemove(file.uuid!, file.name)}
                 className="text-red-600 focus:text-red-600"
               >
                 Delete
@@ -171,17 +203,13 @@ export const columns: ColumnDef<File>[] = [
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleUpdateShareSettings(file.uuid, isPublic ? 1 : 0);
+                handleUpdateShareSettings(file.uuid!, isPublic ? 1 : 0);
               }}
             >
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="link-1" className="text-left">
-                    Public Link
-                  </Label>
+                  <Label>Public Link</Label>
                   <Input
-                    id="link-1"
-                    name="link"
                     defaultValue={`http://localhost:3000/api/files/download/${file.uuid}`}
                     readOnly
                   />
@@ -189,23 +217,18 @@ export const columns: ColumnDef<File>[] = [
 
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="privacy-mode"
                     checked={isPublic}
                     onCheckedChange={(checked) => setIsPublic(checked)}
                   />
-                  <Label htmlFor="privacy-mode">
-                    Make public (Anyone with the link can view)
-                  </Label>
+                  <Label>Make public</Label>
                 </div>
               </div>
 
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="outline">
-                    Close
-                  </Button>
+                  <Button variant="outline">Close</Button>
                 </DialogClose>
-                <Button type="submit">Update Share Settings</Button>
+                <Button type="submit">Update</Button>
               </DialogFooter>
             </form>
           </DialogContent>

@@ -16,13 +16,23 @@ export default function TablePage() {
         if (!res.ok) throw new Error(`Error: ${res.status}`);
         const json = await res.json();
 
-        const formatted = (json.files || []).map((f: any) => ({
+        const files = (json.files || []).map((f: any) => ({
           ...f,
+          kind: "file",
           date: formatDate(f.date),
           size: formatSize(f.size),
         }));
 
-        setData(formatted);
+        const folders = (json.folders || []).map((f: any) => ({
+          ...f,
+          kind: "folder",
+          uuid: null,
+          type: "folder",
+          size: formatSize(f.size),
+          date: formatDate(f.date),
+        }));
+
+        setData([...folders, ...files]);
       } catch (err: any) {
         setError(err.message || "Unknown error");
       } finally {

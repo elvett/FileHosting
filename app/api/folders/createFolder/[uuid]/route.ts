@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getUserFromToken } from "@/lib/auth";
-import { v4 as uuidv4} from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 interface RouteParams {
   params: {
@@ -13,8 +13,7 @@ interface FolderRequest {
   name: string;
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams)
- {
+export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
@@ -53,7 +52,7 @@ export async function POST(req: NextRequest, { params }: RouteParams)
       status: "ok",
       name: newFolder.name,
       uuid: newFolder.uuid,
-      father: folderParentUuid
+      father: folderParentUuid,
     });
   } catch (error) {
     console.error("Server Error:", error);

@@ -80,10 +80,12 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
 
-    const toastId = toast.loading("Creating folder...", { description: "Please wait" });
+    const toastId = toast.loading("Creating folder...", {
+      description: "Please wait",
+    });
 
     try {
-      const response = await fetch(`/api/folders/${folderUuid}`, {
+      const response = await fetch(`/api/folders/createFolder/${folderUuid}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: folderName.trim() }),
@@ -93,7 +95,7 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
 
       const data = await response.json();
       toast.success(`Folder "${data.name}" created`, { id: toastId });
-      setFolderName(""); 
+      setFolderName("");
       setIsDialogOpen(false);
     } catch (error) {
       toast.error("Folder creation failed", { id: toastId });

@@ -4,8 +4,13 @@ import { minioClient } from "@/lib/minio";
 import { v4 as uuidv4 } from "uuid";
 import { getUserFromToken } from "@/lib/auth";
 
+interface RouteParams {
+  params: {
+    uuid: string;
+  };
+}
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
@@ -14,10 +19,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const Params = await params;
+    let folderUuid: string | null = Params.uuid;
+    if (folderUuid === "home") {
+      folderUuid = null;
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    
-    const folderid = formData.get("folderId") as number | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -25,9 +34,6 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const uniqueName = uuidv4();
-    const filename = file.name;
-    const fileSize = file.size;
-    const fileType = file.type;
     const FILESBUCKET = process.env.FILESBUCKET;
 
     if (!FILESBUCKET) {
@@ -38,25 +44,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const metaData = {
-      "Content-Type": fileType,
-    };
-
-    await minioClient.putObject(
-      FILESBUCKET,
-      uniqueName,
-      buffer,
-      fileSize,
-      metaData,
-    );
+    await minioClient.putObject(FILESBUCKET, uniqueName, buffer, file.size, {
+      "Content-Type": file.type,
+    });
 
     const newFile = await db.files.create({
       data: {
-        folderId: folderid,
-        name: filename,
+        folderUuid,
+        name: file.name,
         uuid: uniqueName,
-        size: fileSize,
-        type: fileType,
+        size: file.size,
+        type: file.type,
         ownerId: userId,
       },
     });

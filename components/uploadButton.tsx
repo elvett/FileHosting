@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, Plus, Upload, FileText } from "lucide-react";
+import { ChevronsUpDown, Plus, Upload, FolderPlus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,16 +16,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-interface Uploadfile {
+interface UploadfileProps {
   folderUuid: string;
 }
 
-export function Uploadfile({ folderUuid }:Uploadfile) {
+export function Uploadfile({ folderUuid }: UploadfileProps) {
   const { isMobile } = useSidebar();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [folderName, setFolderName] = React.useState("");
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -62,6 +74,29 @@ export function Uploadfile({ folderUuid }:Uploadfile) {
       });
     } finally {
       e.target.value = "";
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!folderName.trim()) return;
+
+    const toastId = toast.loading("Creating folder...", { description: "Please wait" });
+
+    try {
+      const response = await fetch(`/api/folders/${folderUuid}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: folderName.trim() }),
+      });
+
+      if (!response.ok) throw new Error("Folder creation failed");
+
+      const data = await response.json();
+      toast.success(`Folder "${data.name}" created`, { id: toastId });
+      setFolderName(""); 
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error("Folder creation failed", { id: toastId });
     }
   };
 
@@ -113,14 +148,41 @@ export function Uploadfile({ folderUuid }:Uploadfile) {
                 <span>Upload File</span>
               </DropdownMenuItem>
 
-              <DropdownMenuItem>
-                <FileText className="mr-2 size-4" />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDialogOpen(true);
+                }}
+              >
+                <FolderPlus className="mr-2 size-4" />
                 <span>Create Folder</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Folder</DialogTitle>
+          </DialogHeader>
+
+          <Input
+            placeholder="Folder name"
+            value={folderName}
+            onChange={(e) => setFolderName(e.target.value)}
+            autoFocus
+          />
+
+          <DialogFooter className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateFolder}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

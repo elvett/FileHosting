@@ -3,17 +3,30 @@ import { db } from "@/lib/db";
 import { getUserFromToken } from "@/lib/auth";
 import { v4 as uuidv4} from "uuid";
 
+interface RouteParams {
+  params: {
+    uuid: string;
+  };
+}
+
 interface FolderRequest {
   name: string;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest, { params }: RouteParams)
+ {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const Params = await params;
+    let folderParentUuid: string | null = Params.uuid;
+    if (folderParentUuid === "home") {
+      folderParentUuid = null;
     }
 
     const folderName: FolderRequest = await req.json();
@@ -32,6 +45,7 @@ export async function POST(req: NextRequest) {
         size: 0,
         name: folderName.name,
         ownerId: userId,
+        parentUuid: folderParentUuid,
       },
     });
 
@@ -39,6 +53,7 @@ export async function POST(req: NextRequest) {
       status: "ok",
       name: newFolder.name,
       uuid: newFolder.uuid,
+      father: folderParentUuid
     });
   } catch (error) {
     console.error("Server Error:", error);

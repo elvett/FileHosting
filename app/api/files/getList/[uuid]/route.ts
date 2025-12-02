@@ -68,7 +68,7 @@ export async function GET(
     });
 
     const folders = await db.folder.findMany({
-      where: { ownerId: userId },
+      where: { ownerId: userId, parentUuid: folderUuid},
       select: {
         uuid: true,
         name: true,

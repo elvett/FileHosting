@@ -25,7 +25,6 @@ export async function GET(
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-   
     const Params = await params;
     const fileUuid = Params.uuid;
     if (!fileUuid) {

@@ -21,7 +21,7 @@ export async function POST(
     console.log("Register api");
 
     const body: RegisterRequest = await req.json();
-    const { uniqName, password, email, name } = body;
+    const { uniqName, password, email } = body;
 
     if (!uniqName || !password) {
       return NextResponse.json(
@@ -48,7 +48,6 @@ export async function POST(
       data: {
         uniqName,
         hashPassword: hashedPassword,
-        name,
         email,
       },
     });

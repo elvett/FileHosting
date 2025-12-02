@@ -55,8 +55,7 @@ export async function POST(
       data: { private: letprivacy },
     });
 
-
-   return NextResponse.json({ message: "File privacy update " + letprivacy });
+    return NextResponse.json({ message: "File privacy update " + letprivacy });
   } catch (err) {
     return NextResponse.json(
       { error: "Internal server error" },

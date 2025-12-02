@@ -27,31 +27,31 @@ model Files {
   name      String
   type      String
   size      Int
-  id        Int      @id @default(autoincrement())
-  private   Boolean  @default(true)
-  uuid      String   @unique
+  id        Int       @id @default(autoincrement())
+  private   Boolean   @default(true)
+  uuid      String    @unique
   ownerId   Int
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+   
+  folderUuid String? 
+  folder    Folder?   @relation(fields: [folderUuid], references: [uuid])
 
-  folderId  Int?
-  folder    Folder?  @relation(fields: [folderId], references: [id])
-
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 
 model Folder {
-  id        Int       @id @default(autoincrement())
-  name      String
-  ownerId   Int
-  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  size      Int
-  private   Boolean  @default(true)
+  uuid        String      @unique 
+  name        String
+  ownerId     Int
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  size        Int
+  private     Boolean  @default(true)
 
-  parentId  Int?
-  parent    Folder?   @relation("FolderToParent", fields: [parentId], references: [id])
-  children  Folder[]  @relation("FolderToParent")
+  parentUuid  String?
+  parent      Folder?   @relation("FolderToParent", fields: [parentUuid], references: [uuid])
+  children    Folder[]  @relation("FolderToParent")
 
-  files     Files[]
-  createdAt DateTime @default(now())
+  files       Files[]
+  createdAt   DateTime @default(now())
 }

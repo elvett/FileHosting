@@ -17,8 +17,42 @@ interface removeFolderResponse {
   error?: string;
 }
 
-async function recursiveDeleteFolderContent(){
-  
+async function recursiveDeleteFolderContent(
+  folderUuid: string,
+  userId: number,
+): Promise<void> {
+  const childFolders = await db.folder.findMany({
+    where: { parentUuid: folderUuid, ownerId: userId },
+    select: { uuid: true },
+  });
+
+  for (const child of childFolders) {
+    await recursiveDeleteFolderContent(child.uuid, userId);
+  }
+
+  const files = await db.files.findMany({
+    where: { folderUuid, ownerId: userId },
+    select: { uuid: true },
+  });
+
+  if (files.length > 0) {
+    const objectNames = files.map((f) => f.uuid);
+
+    try {
+      await minioClient.removeObjects(FILES_BUCKET, objectNames);
+    } catch (err) {
+      console.error("MinIO delete error:", err);
+      throw err;
+    }
+
+    await db.files.deleteMany({
+      where: { folderUuid, ownerId: userId },
+    });
+  }
+
+  await db.folder.delete({
+    where: { uuid: folderUuid, ownerId: userId },
+  });
 }
 
 export async function DELETE(
@@ -57,7 +91,7 @@ export async function DELETE(
       );
     }
 
-    await recursiveDeleteFolderContent();
+    await recursiveDeleteFolderContent(folderUuid, userId);
 
     return NextResponse.json({
       success: true,

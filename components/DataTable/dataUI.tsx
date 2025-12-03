@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { DataTable } from "./data-table";
 import { columns, File } from "./columns";
+import { Input } from "@/components/ui/input";
+import { Search,Folder, FileIcon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TablePageProps {
   folderUuid: string;
@@ -13,10 +22,14 @@ export default function TablePage({ folderUuid }: TablePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "folder" | "file">(
+    "all",
+  );
+
   const fetchFiles = useCallback(async () => {
     try {
       setLoading(true);
-
       const res = await fetch(`/api/files/getList/${folderUuid}`);
       if (!res.ok) throw new Error(`Error: ${res.status}`);
       const json = await res.json();
@@ -49,12 +62,72 @@ export default function TablePage({ folderUuid }: TablePageProps) {
     fetchFiles();
   }, [fetchFiles]);
 
-  if (loading) return <div className="p-4">Loading files...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+      const matchesType =
+        typeFilter === "all" ||
+        (typeFilter === "folder" && item.kind === "folder") ||
+        (typeFilter === "file" && item.kind === "file");
+
+      return matchesSearch && matchesType;
+    });
+  }, [data, searchQuery, typeFilter]);
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-64">
+        Loading files...
+      </div>
+    );
+  if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
 
   return (
-    <div className="container mx-auto py-10">
-      <DataTable columns={columns(fetchFiles)} data={data} />
+    <div className="flex h-full flex-col">
+      <div className="flex flex-col gap-4 border-b bg-background px-6 py-4">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search files..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <Select
+            value={typeFilter}
+            onValueChange={(v: any) => setTypeFilter(v)}
+          >
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All items</SelectItem>
+              <SelectItem value="folder">
+                <div className="flex items-center gap-2">
+                  <Folder className="h-4 w-4 text-yellow-500" />
+                  Folders
+                </div>
+              </SelectItem>
+              <SelectItem value="file">
+                <div className="flex items-center gap-2">
+                  <FileIcon className="h-4 w-4 text-blue-500" />
+                  Files
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto">
+        <DataTable columns={columns(fetchFiles)} data={filteredData} />
+      </div>
     </div>
   );
 }

@@ -12,7 +12,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -51,16 +50,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="overflow-hidden rounded-md border">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter Name"
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-      </div>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

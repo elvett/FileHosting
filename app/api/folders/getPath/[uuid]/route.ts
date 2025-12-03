@@ -30,6 +30,12 @@ export async function GET(
     }
     const Params = await params;
     const folderUuid = Params.uuid;
+    const homePath: { uuid: string; name: string } = { uuid: "home", name: "home" };
+
+    if (folderUuid === "home") {
+      return NextResponse.json({ success: true, path: [homePath] });
+    } 
+    
 
     let current = await db.folder.findFirst({
       where: { uuid: folderUuid, ownerId: userId },
@@ -53,7 +59,7 @@ export async function GET(
         select: { uuid: true, name: true, parentUuid: true },
       });
     }
-
+    pathArr.push(homePath)
     pathArr.reverse();
 
     return NextResponse.json({ success: true, path: pathArr });

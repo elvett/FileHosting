@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import Link from "next/link";
+import { handler } from "next/dist/build/templates/app-page";
 
 export type File = {
   uuid: string | null;
@@ -49,7 +50,7 @@ const handlePreview = async (uuid: string, filename: string) => {
     if (!response.ok) {
       const errorData = await response.json();
       toast.error(
-        errorData.error || `Failed to get preview link for "${filename}".`,
+        errorData.error || `Failed to get preview link for "${filename}".`
       );
       return;
     }
@@ -105,7 +106,7 @@ const handleFolderRemove = async (uuid: string, filename: string) => {
   }
 };
 
-export const columns: ColumnDef<File>[] = [
+export const columns = (refetch: () => void): ColumnDef<File>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -212,7 +213,7 @@ export const columns: ColumnDef<File>[] = [
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
                 <MoreHorizontal className="h-4 w-4" />
-              </Button>
+          </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end">
@@ -220,7 +221,10 @@ export const columns: ColumnDef<File>[] = [
 
               <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
-                onClick={() => handleFolderRemove(folderUuid, file.name)}
+                onClick={async () => {
+                await handleFolderRemove(folderUuid, file.name)
+                refetch();
+              }}
               >
                 Delete Folder
               </DropdownMenuItem>
@@ -250,7 +254,11 @@ export const columns: ColumnDef<File>[] = [
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
               <DropdownMenuItem
-                onClick={() => handleDownload(fileUuid, file.name)}
+                onClick={async () => {
+                  await handleDownload(fileUuid, file.name)
+                refetch();
+              }}
+                
               >
                 Download
               </DropdownMenuItem>
@@ -262,7 +270,11 @@ export const columns: ColumnDef<File>[] = [
               </DialogTrigger>
 
               <DropdownMenuItem
-                onClick={() => handleRemove(fileUuid, file.name)}
+               onClick={async () => {
+                  await handleRemove(fileUuid, file.name)
+                refetch();
+              }}
+
                 className="text-red-600 focus:text-red-600"
               >
                 Delete
@@ -276,9 +288,10 @@ export const columns: ColumnDef<File>[] = [
             </DialogHeader>
 
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                handleUpdateShareSettings(fileUuid, isPublic);
+                await handleUpdateShareSettings(fileUuid, isPublic);
+                refetch();
               }}
             >
               <div className="grid gap-4 py-4">

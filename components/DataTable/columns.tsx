@@ -1,5 +1,15 @@
 "use client";
-import { MoreHorizontal, Folder, FileIcon, ArrowUpDown } from "lucide-react";
+
+import {
+  MoreHorizontal,
+  Folder,
+  FileText,
+  ArrowUpDown,
+  Download,
+  Share2,
+  Trash2,
+} from "lucide-react";
+
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,22 +19,23 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { toast } from "sonner";
+
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+
 import { useState } from "react";
 import Link from "next/link";
-import { handler } from "next/dist/build/templates/app-page";
 
 export type File = {
   uuid: string | null;
@@ -43,66 +54,18 @@ const handleDownload = (uuid: string, filename: string) => {
 };
 
 const handlePreview = async (uuid: string, filename: string) => {
-  const previewApiUrl = `/api/files/preview/${uuid}`;
-
   try {
-    const response = await fetch(previewApiUrl);
-    if (!response.ok) {
-      const errorData = await response.json();
-      toast.error(
-        errorData.error || `Failed to get preview link for "${filename}".`
-      );
+    const res = await fetch(`/api/files/preview/${uuid}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.url) {
+      toast.error(`Failed to open preview for "${filename}"`);
       return;
     }
 
-    const data = await response.json();
-    if (data.url) {
-      window.open(data.url, "_blank");
-      toast.info(`Opening preview for "${filename}"...`);
-    } else {
-      toast.error(`Invalid preview link received for "${filename}".`);
-    }
-  } catch (error) {
-    console.error("Error generating preview link:", error);
-    toast.error("An error occurred while generating the preview link.");
-  }
-};
-
-const handleUpdateShareSettings = async (uuid: string, isPublic: boolean) => {
-  const setprivacy = isPublic ? 0 : 1;
-  const url = `/api/files/update-privacy/${uuid}/${setprivacy}`;
-  try {
-    const response = await fetch(url, { method: "POST" });
-    if (response.ok) {
-      toast.success(`Share settings updated.`);
-    } else {
-      toast.error("Failed to update share settings.");
-    }
-  } catch (error) {
-    console.error("Error updating share settings:", error);
-    toast.error("An error occurred during update.");
-  }
-};
-
-const handleRemove = async (uuid: string, filename: string) => {
-  try {
-    const res = await fetch(`/api/files/remove/${uuid}`, { method: "DELETE" });
-    if (res.ok) toast.success(`File "${filename}" removed successfully.`);
-    else toast.error("Failed to remove file.");
-  } catch (err) {
-    toast.error("An error occurred during removal.");
-  }
-};
-
-const handleFolderRemove = async (uuid: string, filename: string) => {
-  try {
-    const res = await fetch(`/api/folders/removeFolder/${uuid}`, {
-      method: "DELETE",
-    });
-    if (res.ok) toast.success(`Folder "${filename}" removed successfully.`);
-    else toast.error("Failed to remove folder.");
-  } catch (err) {
-    toast.error("An error occurred during folder removal.");
+    window.open(data.url, "_blank");
+  } catch {
+    toast.error("Preview error");
   }
 };
 
@@ -113,47 +76,34 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8 px-0 font-medium"
       >
-        Name
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        Name <ArrowUpDown className="ml-2 h-3 w-3" />
       </Button>
     ),
     cell: ({ row }) => {
       const item = row.original;
-      const fileUuid = item.uuid;
-
-      if (!fileUuid) {
-        return (
-          <div className="flex items-center gap-2">
-            <FileIcon className="w-4 h-4" />
-            <span>{item.name}</span>
-          </div>
-        );
-      }
 
       if (item.kind === "folder") {
         return (
           <Link
-            href={`/dashboard/${fileUuid}`}
+            href={`/dashboard/${item.uuid}`}
             className="flex items-center gap-2 font-semibold text-blue-600"
           >
             <Folder className="w-4 h-4 text-yellow-600" />
-            <span>{item.name}</span>
+            {item.name}
           </Link>
         );
       }
 
       return (
-        <Button
-          variant="link"
-          className="p-0 h-auto justify-start text-inherit hover:no-underline"
-          onClick={() => handlePreview(fileUuid, item.name)}
+        <button
+          onClick={() => item.uuid && handlePreview(item.uuid, item.name)}
+          className="flex items-center gap-3 text-left hover:text-foreground"
         >
-          <div className="flex items-center gap-2">
-            <FileIcon className="w-4 h-4" />
-            <span>{item.name}</span>
-          </div>
-        </Button>
+          <FileText className="h-5 w-5 text-blue-600" />
+          <span className="font-medium truncate max-w-96">{item.name}</span>
+        </button>
       );
     },
   },
@@ -164,9 +114,9 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8 px-0"
       >
-        Size
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        Size <ArrowUpDown className="ml-2 h-3 w-3" />
       </Button>
     ),
     cell: ({ row }) =>
@@ -180,8 +130,8 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
       row.original.kind === "folder"
         ? "—"
         : row.original.privacy
-        ? "No"
-        : "Yes",
+          ? "No"
+          : "Yes",
   },
 
   {
@@ -199,50 +149,39 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
   {
     id: "actions",
     cell: ({ row }) => {
-      const file = row.original;
+      const item = row.original;
+      if (!item.uuid) return null;
 
- 
-      if (file.kind === "folder") {
-        if (!file.uuid)
-          return <div className="text-sm text-muted-foreground">Error</div>;
+      const [shareOpen, setShareOpen] = useState(false);
+      const [isPublic, setIsPublic] = useState(!item.privacy);
 
-        const folderUuid = file.uuid as string;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-          </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Folder Actions</DropdownMenuLabel>
-
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600"
-                onClick={async () => {
-                await handleFolderRemove(folderUuid, file.name)
-                refetch();
-              }}
-              >
-                Delete Folder
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      const updatePrivacy = async () => {
+        await fetch(
+          `/api/files/update-privacy/${item.uuid}/${isPublic ? 0 : 1}`,
+          { method: "POST" },
         );
-      }
 
-      const [isPublic, setIsPublic] = useState(!file.privacy);
+        toast.success("Share settings updated.");
+        refetch();
+        setShareOpen(false);
+      };
 
-      if (!file.uuid)
-        return <div className="text-sm text-muted-foreground">Error</div>;
+      const removeItem = async () => {
+        const endpoint =
+          item.kind === "folder"
+            ? "/api/folders/removeFolder"
+            : "/api/files/remove";
 
-      const fileUuid = file.uuid as string;
-      const publicLink = `${window.location.origin}/api/files/download/${fileUuid}`;
+        await fetch(`${endpoint}/${item.uuid}`, { method: "DELETE" });
+
+        toast.success(
+          item.kind === "folder" ? "Folder removed" : "File removed",
+        );
+        refetch();
+      };
 
       return (
-        <Dialog>
+        <>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -253,83 +192,61 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
+              {item.kind === "file" && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => handleDownload(item.uuid!, item.name)}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </DropdownMenuItem>
+                </>
+              )}
+
               <DropdownMenuItem
-                onClick={async () => {
-                  await handleDownload(fileUuid, file.name)
-                refetch();
-              }}
-                
-              >
-                Download
-              </DropdownMenuItem>
-
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  Share
-                </DropdownMenuItem>
-              </DialogTrigger>
-
-              <DropdownMenuItem
-               onClick={async () => {
-                  await handleRemove(fileUuid, file.name)
-                refetch();
-              }}
-
+                onClick={removeItem}
                 className="text-red-600 focus:text-red-600"
               >
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Share File: {file.name}</DialogTitle>
-            </DialogHeader>
+          {item.kind === "file" && (
+            <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Share: {item.name}</DialogTitle>
+                </DialogHeader>
 
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                await handleUpdateShareSettings(fileUuid, isPublic);
-                refetch();
-              }}
-            >
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="link-1" className="text-left">
-                    Public Link
-                  </Label>
-                  <Input
-                    id="link-1"
-                    name="link"
-                    defaultValue={publicLink}
-                    readOnly
-                  />
+                <div className="space-y-4 py-4">
+                  <div>
+                    <Label>Public link</Label>
+                    <Input
+                      readOnly
+                      value={`${window.location.origin}/api/files/download/${item.uuid}`}
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+                    <Label>Make public (Anyone with the link can view)</Label>
+                  </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="privacy-mode"
-                    checked={isPublic}
-                    onCheckedChange={(checked) => setIsPublic(checked)}
-                  />
-                  <Label htmlFor="privacy-mode">
-                    Make public (Anyone with the link can view)
-                  </Label>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="outline">
-                    Close
-                  </Button>
-                </DialogClose>
-                <Button type="submit">Update Share Settings</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button onClick={updatePrivacy}>Save</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </>
       );
     },
   },

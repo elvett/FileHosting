@@ -16,7 +16,7 @@ interface GetPathResponse {
 
 export async function GET(
   req: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<GetPathResponse>> {
   try {
     const user = await getUserFromToken();
@@ -25,17 +25,19 @@ export async function GET(
     if (!userId) {
       return NextResponse.json(
         { success: false, path: [], error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
     const Params = await params;
     const folderUuid = Params.uuid;
-    const homePath: { uuid: string; name: string } = { uuid: "home", name: "home" };
+    const homePath: { uuid: string; name: string } = {
+      uuid: "home",
+      name: "home",
+    };
 
     if (folderUuid === "home") {
       return NextResponse.json({ success: true, path: [homePath] });
-    } 
-    
+    }
 
     let current = await db.folder.findFirst({
       where: { uuid: folderUuid, ownerId: userId },
@@ -45,7 +47,7 @@ export async function GET(
     if (!current) {
       return NextResponse.json(
         { success: false, path: [], error: "Folder not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -59,7 +61,7 @@ export async function GET(
         select: { uuid: true, name: true, parentUuid: true },
       });
     }
-    pathArr.push(homePath)
+    pathArr.push(homePath);
     pathArr.reverse();
 
     return NextResponse.json({ success: true, path: pathArr });
@@ -67,7 +69,7 @@ export async function GET(
     console.error("Server Error:", error);
     return NextResponse.json(
       { success: false, path: [], error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { DataTable } from "./data-table";
 import { columns, File } from "./columns";
 import { Input } from "@/components/ui/input";
-import { Search,Folder, FileIcon } from "lucide-react";
+import { Search, Folder, FileIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 
 interface TablePageProps {
   folderUuid: string;

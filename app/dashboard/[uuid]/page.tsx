@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 import { redirect } from "next/navigation";
 import { getUserFromToken } from "@/lib/auth";
+import { BreadcrumbWithApi } from "@/components/ui/BreadcrumbForPage";
 
 interface PageProps {
   params: Promise<{ uuid: string }>;
@@ -28,7 +29,7 @@ export default async function Page({ params }: PageProps) {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background">
           <div className="flex items-center gap-3 px-6">
             <SidebarTrigger className="-ml-1" />
-            <h1 className="text-2xl font-semibold tracking-tight">Files</h1>
+            <BreadcrumbWithApi folderUuid={folderUuid}></BreadcrumbWithApi>
           </div>
         </header>
         <div className="flex flex-1 flex-col">

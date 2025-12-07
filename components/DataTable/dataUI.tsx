@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { useRefreshSignal } from "@/lib/useRefreshSignal";
 
 interface TablePageProps {
   folderUuid: string;
@@ -22,11 +22,8 @@ export default function TablePage({ folderUuid }: TablePageProps) {
   const [data, setData] = useState<File[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "folder" | "file">(
-    "all",
-  );
+  const [typeFilter, setTypeFilter] = useState<"all" | "folder" | "file">("all");
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -58,6 +55,7 @@ export default function TablePage({ folderUuid }: TablePageProps) {
       setLoading(false);
     }
   }, [folderUuid]);
+  useRefreshSignal(fetchFiles); 
 
   useEffect(() => {
     fetchFiles();
@@ -73,7 +71,6 @@ export default function TablePage({ folderUuid }: TablePageProps) {
         typeFilter === "all" ||
         (typeFilter === "folder" && item.kind === "folder") ||
         (typeFilter === "file" && item.kind === "file");
-
       return matchesSearch && matchesType;
     });
   }, [data, searchQuery, typeFilter]);
@@ -100,10 +97,7 @@ export default function TablePage({ folderUuid }: TablePageProps) {
             />
           </div>
 
-          <Select
-            value={typeFilter}
-            onValueChange={(v: any) => setTypeFilter(v)}
-          >
+          <Select value={typeFilter} onValueChange={(v: any) => setTypeFilter(v)}>
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
@@ -131,17 +125,17 @@ export default function TablePage({ folderUuid }: TablePageProps) {
       </div>
     </div>
   );
-}
 
-function formatDate(date: string | number) {
-  const d = new Date(date);
-  return d.toLocaleDateString("ru-RU");
-}
+  function formatDate(date: string | number) {
+    const d = new Date(date);
+    return d.toLocaleDateString("ru-RU");
+  }
 
-function formatSize(bytes: number) {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  function formatSize(bytes: number) {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }
 }

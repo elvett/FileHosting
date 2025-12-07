@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useRefreshSignal } from "@/lib/useRefreshSignal";
 
 interface UploadfileProps {
   folderUuid: string;
@@ -37,6 +38,8 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [folderName, setFolderName] = React.useState("");
+
+  const triggerRefresh = useRefreshSignal();
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -58,19 +61,14 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
         method: "POST",
         body: formData,
       });
-
       if (!response.ok) throw new Error("Upload failed");
       await response.json();
 
-      toast.success("Success", {
-        id: toastId,
-        description: "File uploaded successfully",
-      });
+      toast.success("Success", { id: toastId, description: "File uploaded successfully" });
+
+      triggerRefresh(); 
     } catch (error) {
-      toast.error("Error", {
-        id: toastId,
-        description: "File upload failed",
-      });
+      toast.error("Error", { id: toastId, description: "File upload failed" });
     } finally {
       e.target.value = "";
     }
@@ -79,9 +77,7 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
 
-    const toastId = toast.loading("Creating folder...", {
-      description: "Please wait",
-    });
+    const toastId = toast.loading("Creating folder...", { description: "Please wait" });
 
     try {
       const response = await fetch(`/api/folders/createFolder/${folderUuid}`, {
@@ -89,13 +85,14 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: folderName.trim() }),
       });
-
       if (!response.ok) throw new Error("Folder creation failed");
-
       const data = await response.json();
+
       toast.success(`Folder "${data.name}" created`, { id: toastId });
       setFolderName("");
       setIsDialogOpen(false);
+
+      triggerRefresh();
     } catch (error) {
       toast.error("Folder creation failed", { id: toastId });
     }
@@ -121,11 +118,9 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Plus className="size-4" />
                 </div>
-
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">New</span>
                 </div>
-
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>

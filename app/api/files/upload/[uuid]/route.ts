@@ -10,13 +10,20 @@ interface RouteParams {
   };
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+interface UploadResponse {
+  message?: string;
+  error?: string;
+  success: boolean;
+}
+
+
+export async function POST(req: NextRequest, { params }: RouteParams): Promise<NextResponse<UploadResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const Params = await params;
@@ -25,11 +32,26 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       folderUuid = null;
     }
 
+    if (folderUuid !== null) {
+      const folder = await db.folder.findUnique({
+        where: {
+          uuid: folderUuid,
+          ownerId: userId,
+        },
+      });
+
+      if (!folder) {
+        return NextResponse.json(
+          {success: false, error: "Folder not found" },
+          { status: 404 },
+        );
+      }
+    }
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({success: false, error: "No file provided" }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -39,7 +61,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!FILESBUCKET) {
       console.error("Environment variable FILESBUCKET is not set");
       return NextResponse.json(
-        { error: "Server configuration error" },
+        {success: false, error: "Server configuration error" },
         { status: 500 },
       );
     }
@@ -59,9 +81,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    return NextResponse.json({ status: "ok", uuid: newFile.uuid });
+    return NextResponse.json({ success: true, uuid: newFile.uuid });
   } catch (error) {
     console.error("Server Error:", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({success: false, error: "Internal Error" }, { status: 500 });
   }
 }

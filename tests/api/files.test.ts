@@ -80,6 +80,10 @@ describe("Upload API Integration Flow", () => {
     const formData = new FormData();
     const req = createUploadRequest("home", formData);
     const res = await POST(req, { params: { uuid: "home" } });
+    
+    const body = await res.json();
+    expect(body.success).toBe(false);
+
     expect(res.status).toBe(401);
   });
 
@@ -88,6 +92,10 @@ describe("Upload API Integration Flow", () => {
     const formData = new FormData();
     const req = createUploadRequest("home", formData);
     const res = await POST(req, { params: { uuid: "home" } });
+    
+    const body = await res.json();
+    expect(body.success).toBe(false);
+
     expect(res.status).toBe(400);
   });
 
@@ -105,8 +113,12 @@ describe("Upload API Integration Flow", () => {
     const res = await POST(req, { params: { uuid: "home" } });
     const json = await res.json();
 
+    expect(json.success).toBe(true);
     expect(res.status).toBe(200);
-    expect(json.status).toBe("ok");
+    
+    
+    
+
 
     const fileUuid = json.uuid;
     expect(fileUuid).toBeDefined();
@@ -143,7 +155,8 @@ describe("Upload API Integration Flow", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.status).toBe("ok");
+
+    expect(json.success).toBe(true);
 
     const fileUuid = json.uuid;
     const fileInDb = await db.files.findUnique({ where: { uuid: fileUuid } });
@@ -169,6 +182,10 @@ describe("Upload API Integration Flow", () => {
 
     const req = createUploadRequest(strangerFolder.uuid, formData);
     const res = await POST(req, { params: { uuid: strangerFolder.uuid } });
+    
+   
+    const body = await res.json();
+    expect(body.success).toBe(false);
 
     expect(res.status).toBe(404);
   });

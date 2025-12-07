@@ -17,7 +17,7 @@ describe("Auth Integration Flow", () => {
     await db.user.deleteMany();
   });
 
-  it("should successfully log in a newly registered user", async () => {
+  it("should return 200 successfully log in", async () => {
     const username = "new_login_user";
     const password = "secure_password_123";
     const email = "login_test@mail.com";
@@ -45,7 +45,7 @@ describe("Auth Integration Flow", () => {
     expect(body.user.id).toBeDefined();
   });
 
-  it("should fail login if password is wrong", async () => {
+  it("should return 401 fail login password is wrong", async () => {
     await registerPOST(
       createRequest("http://localhost/api/register", {
         uniqName: "fail_test",

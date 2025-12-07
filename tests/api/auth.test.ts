@@ -30,5 +30,39 @@ describe("Auth Integration Flow", () => {
       }),
     );
     expect(registerRes.status).toBe(200);
+
+    const loginRes = await loginPOST(
+      createRequest("http://localhost/api/login", {
+        uniqName: username,
+        password: password,
+      }),
+    );
+
+    expect(loginRes.status).toBe(200);
+    const body = await loginRes.json();
+    
+    expect(body.user).toBeDefined();
+    expect(body.user.id).toBeDefined();
+  });
+
+  it("should fail login if password is wrong", async () => {
+    await registerPOST(
+      createRequest("http://localhost/api/register", {
+        uniqName: "fail_test",
+        password: "correct_password",
+        email: "fail@mail.com",
+      }),
+    );
+
+    const loginRes = await loginPOST(
+      createRequest("http://localhost/api/login", {
+        uniqName: "fail_test",
+        password: "wrong_password",
+      }),
+    );
+
+    expect(loginRes.status).toBe(401);
+    const body = await loginRes.json();
+    expect(body.error).toBe("Invalid password");
   });
 });

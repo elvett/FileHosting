@@ -1,4 +1,7 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import {
+  PostgreSqlContainer,
+  StartedPostgreSqlContainer,
+} from "@testcontainers/postgresql";
 import { MinioContainer, StartedMinioContainer } from "@testcontainers/minio";
 import { execSync } from "child_process";
 import path from "path";
@@ -9,7 +12,7 @@ let minioContainer: StartedMinioContainer;
 const FILES_BUCKET = process.env.FILES_BUCKET || "test-files-bucket";
 
 export default async function setup() {
-  console.log('--- Global Setup: Start ---');
+  console.log("--- Global Setup: Start ---");
 
   try {
     pgContainer = await new PostgreSqlContainer("postgres:16-alpine")
@@ -25,7 +28,6 @@ export default async function setup() {
       env: { ...process.env },
       stdio: "inherit",
     });
-
 
     minioContainer = await new MinioContainer("quay.io/minio/minio")
       .withUsername("minioadmin")
@@ -55,7 +57,7 @@ export default async function setup() {
       await minioClient.makeBucket(FILES_BUCKET, "us-east-1");
     }
 
-    console.log('--- Global Setup: Complete ---');
+    console.log("--- Global Setup: Complete ---");
 
     return async () => {
       await minioContainer.stop();

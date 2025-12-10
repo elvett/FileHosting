@@ -6,12 +6,12 @@ type FileEntry = {
   uuid: string;
   type: string;
   name: string;
-  // extension: string;
   size: number;
   privacy: boolean;
   date: number;
   folder?: any;
 };
+
 type FolderEntry = {
   uuid: string;
   name: string;
@@ -20,42 +20,40 @@ type FolderEntry = {
   date: number;
 };
 
-interface RouteParams {
-  params: {
-    uuid: string;
-  };
-}
+type RouteParams = { uuid: string };
 
 interface DataResponse {
   message: string;
   files: FileEntry[];
   folders?: FolderEntry[];
+  success: boolean;
 }
 
 interface ErrorResponse {
   error: string;
+  success: boolean;
 }
 
 export async function GET(
   req: NextRequest,
-  { params }: RouteParams,
+  context: { params: Promise<RouteParams> },
 ): Promise<NextResponse<DataResponse | ErrorResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    const Params = await params;
-    let folderUuid: string | null = Params.uuid;
-    if (folderUuid === "home") {
-      folderUuid = null;
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { uuid } = await context.params;
+    const folderUuid = uuid === "home" ? null : uuid;
 
     const files = await db.files.findMany({
-      where: { ownerId: userId, folderUuid: folderUuid },
+      where: { ownerId: userId, folderUuid },
       select: {
         uuid: true,
         name: true,
@@ -78,33 +76,27 @@ export async function GET(
       },
     });
 
-    const parsedFolders: FolderEntry[] = folders.map((f) => {
-      return {
-        uuid: f.uuid,
-        name: f.name,
-        size: f.size,
-        privacy: f.private,
-        date: f.createdAt.getTime(),
-      };
-    });
+    const parsedFolders: FolderEntry[] = folders.map((f) => ({
+      uuid: f.uuid,
+      name: f.name,
+      size: f.size,
+      privacy: f.private,
+      date: f.createdAt.getTime(),
+    }));
 
-    const parsedFiles: FileEntry[] = files.map((f) => {
-      const name = f.name;
-
-      return {
-        folder: f.folder,
-        uuid: f.uuid,
-        type: f.type,
-        name,
-        // extension,
-        size: f.size,
-        privacy: f.private,
-        date: f.createdAt.getTime(),
-      };
-    });
+    const parsedFiles: FileEntry[] = files.map((f) => ({
+      folder: f.folder,
+      uuid: f.uuid,
+      type: f.type,
+      name: f.name,
+      size: f.size,
+      privacy: f.private,
+      date: f.createdAt.getTime(),
+    }));
 
     return NextResponse.json(
       {
+        success: true,
         message: "Files loaded successfully",
         files: parsedFiles,
         folders: parsedFolders,
@@ -113,6 +105,9 @@ export async function GET(
     );
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Server error" },
+      { status: 500 },
+    );
   }
 }

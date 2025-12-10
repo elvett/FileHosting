@@ -9,24 +9,17 @@ export interface FileDownloadError {
   error: string;
 }
 
-type ApiResponse = FileDownloadError;
-
-interface RouteParams {
-  params: {
-    uuid: string;
-  };
-}
+type RouteParams = { uuid: string };
 
 export async function GET(
   req: NextRequest,
-  { params }: RouteParams,
-): Promise<NextResponse<ApiResponse> | NextResponse> {
+  context: { params: Promise<RouteParams> },
+): Promise<NextResponse<FileDownloadError> | NextResponse> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    const Params = await params;
-    const fileUuid = Params.uuid;
+    const { uuid: fileUuid } = await context.params;
     if (!fileUuid) {
       return NextResponse.json({ error: "UUID is required" }, { status: 400 });
     }
@@ -49,14 +42,12 @@ export async function GET(
     }
 
     const stream = await minioClient.getObject(FILES_BUCKET, fileUuid);
-
     const chunks: Uint8Array[] = [];
     for await (const chunk of stream) {
       chunks.push(chunk as Uint8Array);
     }
 
     const data = new Uint8Array(Buffer.concat(chunks));
-
     const fileName = encodeURIComponent(file.name);
 
     return new NextResponse(data, {

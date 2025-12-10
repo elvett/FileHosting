@@ -16,14 +16,19 @@ interface UploadResponse {
   success: boolean;
 }
 
-
-export async function POST(req: NextRequest, { params }: RouteParams): Promise<NextResponse<UploadResponse>> {
+export async function POST(
+  req: NextRequest,
+  { params }: RouteParams,
+): Promise<NextResponse<UploadResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
     if (!userId) {
-      return NextResponse.json({success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const Params = await params;
@@ -42,7 +47,7 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
 
       if (!folder) {
         return NextResponse.json(
-          {success: false, error: "Folder not found" },
+          { success: false, error: "Folder not found" },
           { status: 404 },
         );
       }
@@ -51,7 +56,10 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({success: false, error: "No file provided" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "No file provided" },
+        { status: 400 },
+      );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -61,7 +69,7 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
     if (!FILESBUCKET) {
       console.error("Environment variable FILESBUCKET is not set");
       return NextResponse.json(
-        {success: false, error: "Server configuration error" },
+        { success: false, error: "Server configuration error" },
         { status: 500 },
       );
     }
@@ -84,6 +92,9 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<N
     return NextResponse.json({ success: true, uuid: newFile.uuid });
   } catch (error) {
     console.error("Server Error:", error);
-    return NextResponse.json({success: false, error: "Internal Error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal Error" },
+      { status: 500 },
+    );
   }
 }

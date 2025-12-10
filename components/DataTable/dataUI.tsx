@@ -23,7 +23,9 @@ export default function TablePage({ folderUuid }: TablePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "folder" | "file">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "folder" | "file">(
+    "all",
+  );
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -55,7 +57,7 @@ export default function TablePage({ folderUuid }: TablePageProps) {
       setLoading(false);
     }
   }, [folderUuid]);
-  useRefreshSignal(fetchFiles); 
+  useRefreshSignal(fetchFiles);
 
   useEffect(() => {
     fetchFiles();
@@ -97,7 +99,10 @@ export default function TablePage({ folderUuid }: TablePageProps) {
             />
           </div>
 
-          <Select value={typeFilter} onValueChange={(v: any) => setTypeFilter(v)}>
+          <Select
+            value={typeFilter}
+            onValueChange={(v: any) => setTypeFilter(v)}
+          >
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>

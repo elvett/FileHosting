@@ -7,7 +7,7 @@ export function useRefreshSignal(callback?: Listener) {
   const [, setTick] = useState(0);
 
   useEffect(() => {
-    const listener = callback || (() => setTick(t => t + 1));
+    const listener = callback || (() => setTick((t) => t + 1));
     listeners.push(listener);
     return () => {
       const index = listeners.indexOf(listener);
@@ -15,6 +15,6 @@ export function useRefreshSignal(callback?: Listener) {
     };
   }, [callback]);
 
-  const trigger = () => listeners.forEach(l => l());
+  const trigger = () => listeners.forEach((l) => l());
   return trigger;
 }

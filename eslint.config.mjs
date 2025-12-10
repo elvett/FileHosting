@@ -38,6 +38,7 @@ export default defineConfig([
     "build/**",
     "next-env.d.ts",
     "components",
-    "tests"
+    "tests",
+    ".stryker-tmp",
   ]),
 ]);

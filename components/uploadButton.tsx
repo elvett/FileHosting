@@ -64,9 +64,12 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
       if (!response.ok) throw new Error("Upload failed");
       await response.json();
 
-      toast.success("Success", { id: toastId, description: "File uploaded successfully" });
+      toast.success("Success", {
+        id: toastId,
+        description: "File uploaded successfully",
+      });
 
-      triggerRefresh(); 
+      triggerRefresh();
     } catch (error) {
       toast.error("Error", { id: toastId, description: "File upload failed" });
     } finally {
@@ -77,7 +80,9 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
 
-    const toastId = toast.loading("Creating folder...", { description: "Please wait" });
+    const toastId = toast.loading("Creating folder...", {
+      description: "Please wait",
+    });
 
     try {
       const response = await fetch(`/api/folders/createFolder/${folderUuid}`, {

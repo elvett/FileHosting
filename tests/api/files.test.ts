@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  vi,
+} from "vitest";
 import { db } from "@/lib/db";
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
@@ -22,7 +30,10 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-function createUploadRequest(endpoint: string, formData: FormData): NextRequest {
+function createUploadRequest(
+  endpoint: string,
+  formData: FormData,
+): NextRequest {
   return new NextRequest(`${BASE_URL}/${endpoint}`, {
     method: "POST",
     body: formData,
@@ -60,7 +71,9 @@ describe("Upload API Integration Flow", () => {
     });
     strangerUserId = stranger.id;
 
-    ownerToken = jwt.sign({ userId: ownerUser.id }, TEST_JWT_SECRET, { expiresIn: "7d" });
+    ownerToken = jwt.sign({ userId: ownerUser.id }, TEST_JWT_SECRET, {
+      expiresIn: "7d",
+    });
   });
 
   beforeEach(() => {
@@ -80,7 +93,7 @@ describe("Upload API Integration Flow", () => {
     const formData = new FormData();
     const req = createUploadRequest("home", formData);
     const res = await POST(req, { params: { uuid: "home" } });
-    
+
     const body = await res.json();
     expect(body.success).toBe(false);
 
@@ -92,7 +105,7 @@ describe("Upload API Integration Flow", () => {
     const formData = new FormData();
     const req = createUploadRequest("home", formData);
     const res = await POST(req, { params: { uuid: "home" } });
-    
+
     const body = await res.json();
     expect(body.success).toBe(false);
 
@@ -115,10 +128,6 @@ describe("Upload API Integration Flow", () => {
 
     expect(json.success).toBe(true);
     expect(res.status).toBe(200);
-    
-    
-    
-
 
     const fileUuid = json.uuid;
     expect(fileUuid).toBeDefined();
@@ -182,8 +191,7 @@ describe("Upload API Integration Flow", () => {
 
     const req = createUploadRequest(strangerFolder.uuid, formData);
     const res = await POST(req, { params: { uuid: strangerFolder.uuid } });
-    
-   
+
     const body = await res.json();
     expect(body.success).toBe(false);
 

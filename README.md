@@ -8,41 +8,41 @@ The goal is to create a web application that allows users to upload, store, and 
 ## 📸 Screenshot
 
 ![App Screenshot](diagram/image.png)
-*Example of the user interface.*
+_Example of the user interface._
 
 ---
 
 ## ⚙️ Core Features
 
-* 🔐 User registration and login
-* 📂 File upload to the server
-* 🔗 Unique link generation for file sharing
-* 📑 User’s file list
-* ❌ File deletion
-* And more...
+- 🔐 User registration and login
+- 📂 File upload to the server
+- 🔗 Unique link generation for file sharing
+- 📑 User’s file list
+- ❌ File deletion
+- And more...
 
 ---
 
 ## 📊 Diagrams
 
-* **Use Case Diagram**
+- **Use Case Diagram**
   ![Use Case Diagram](diagram/1.png)
 
-* **ER Diagram**
+- **ER Diagram**
   ![ER Diagram](diagram/3.png)
 
-* **Software Component Diagram**
+- **Software Component Diagram**
   ![Component Diagram](diagram/2.png)
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Framework**: Next.js
-* **Language**: TypeScript
-* **Database**: PostgreSQL
-* **Object Storage**: MinIO (S3-compatible)
-* **Testing**: Vitest + Testcontainers
+- **Framework**: Next.js
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **Object Storage**: MinIO (S3-compatible)
+- **Testing**: Vitest + Testcontainers
 
 ---
 

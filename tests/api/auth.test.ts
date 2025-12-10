@@ -40,7 +40,7 @@ describe("Auth Integration Flow", () => {
 
     expect(loginRes.status).toBe(200);
     const body = await loginRes.json();
-    
+
     expect(body.user).toBeDefined();
     expect(body.user.id).toBeDefined();
   });

@@ -1,42 +1,40 @@
+import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { NextResponse, NextRequest } from "next/server";
-
-interface RouteParams {
-  params: {
-    uuid: string;
-  };
-}
 
 interface GetPathResponse {
   success: boolean;
+  error: string | null;
   path: { uuid: string; name: string }[];
-  error?: string;
 }
 
+type RouteParams = {
+  uuid: string;
+};
+
 export async function GET(
-  req: NextRequest,
-  { params }: RouteParams,
+  request: NextRequest,
+  context: { params: Promise<RouteParams> },
 ): Promise<NextResponse<GetPathResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    if (!userId) {
+    if (!userId)
       return NextResponse.json(
-        { success: false, path: [], error: "Unauthorized" },
+        { success: false, error: "Unauthorized", path: [] },
         { status: 401 },
       );
-    }
-    const Params = await params;
-    const folderUuid = Params.uuid;
-    const homePath: { uuid: string; name: string } = {
-      uuid: "home",
-      name: "home",
-    };
+
+    const { uuid: folderUuid } = await context.params;
+
+    const homePath = { uuid: "home", name: "home" } as const;
 
     if (folderUuid === "home") {
-      return NextResponse.json({ success: true, path: [homePath] });
+      return NextResponse.json(
+        { success: true, error: null, path: [homePath] },
+        { status: 200 },
+      );
     }
 
     let current = await db.folder.findFirst({
@@ -44,16 +42,17 @@ export async function GET(
       select: { uuid: true, name: true, parentUuid: true },
     });
 
-    if (!current) {
+    if (!current)
       return NextResponse.json(
-        { success: false, path: [], error: "Folder not found" },
+        { success: false, error: "Folder not found", path: [] },
         { status: 404 },
       );
-    }
 
-    const pathArr: { uuid: string; name: string }[] = [];
+    const path: { uuid: string; name: string }[] = [];
+
     while (current) {
-      pathArr.push({ uuid: current.uuid, name: current.name });
+      path.push({ uuid: current.uuid, name: current.name });
+
       if (!current.parentUuid) break;
 
       current = await db.folder.findFirst({
@@ -61,14 +60,18 @@ export async function GET(
         select: { uuid: true, name: true, parentUuid: true },
       });
     }
-    pathArr.push(homePath);
-    pathArr.reverse();
 
-    return NextResponse.json({ success: true, path: pathArr });
-  } catch (error) {
-    console.error("Server Error:", error);
+    path.push(homePath);
+    path.reverse();
+
     return NextResponse.json(
-      { success: false, path: [], error: "Internal server error" },
+      { success: true, error: null, path },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error", path: [] },
       { status: 500 },
     );
   }

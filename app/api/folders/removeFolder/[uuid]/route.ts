@@ -1,23 +1,20 @@
-import { NextResponse, NextRequest } from "next/server";
-import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { minioClient } from "@/lib/minio";
 
-const FILES_BUCKET = process.env.MINIO_BUCKET_NAME || "files";
+const FILES_BUCKET = process.env.FILES_BUCKET || "files";
 
-interface RouteParams {
-  params: {
-    uuid: string;
-  };
-}
-
-interface removeFolderResponse {
+interface RemoveFolderResponse {
   success: boolean;
-  message?: string;
-  error?: string;
+  error: string | null;
 }
 
-async function recursiveDeleteFolderContent(
+type RouteParams = {
+  uuid: string;
+};
+
+async function deleteFolderRecursively(
   folderUuid: string,
   userId: number,
 ): Promise<void> {
@@ -26,8 +23,8 @@ async function recursiveDeleteFolderContent(
     select: { uuid: true },
   });
 
-  for (const child of childFolders) {
-    await recursiveDeleteFolderContent(child.uuid, userId);
+  for (const { uuid } of childFolders) {
+    await deleteFolderRecursively(uuid, userId);
   }
 
   const files = await db.files.findMany({
@@ -37,7 +34,6 @@ async function recursiveDeleteFolderContent(
 
   if (files.length > 0) {
     const objectNames = files.map((f) => f.uuid);
-
     try {
       await minioClient.removeObjects(FILES_BUCKET, objectNames);
     } catch (err) {
@@ -51,56 +47,49 @@ async function recursiveDeleteFolderContent(
   }
 
   await db.folder.delete({
-    where: { uuid: folderUuid, ownerId: userId },
+    where: { uuid: folderUuid },
   });
 }
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: RouteParams,
-): Promise<NextResponse<removeFolderResponse>> {
+  request: NextRequest,
+  context: { params: Promise<RouteParams> },
+): Promise<NextResponse<RemoveFolderResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    if (!userId) {
+    if (!userId)
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 },
       );
-    }
-    const Params = await params;
-    const folderUuid = Params.uuid;
 
-    if (!folderUuid) {
+    const { uuid: folderUuid } = await context.params;
+
+    if (!folderUuid)
       return NextResponse.json(
-        { success: false, error: "No folder uuid provided" },
+        { success: false, error: "UUID is required" },
         { status: 400 },
       );
-    }
 
     const folder = await db.folder.findUnique({
       where: { uuid: folderUuid, ownerId: userId },
-      select: { parentUuid: true },
     });
 
-    if (!folder) {
+    if (!folder)
       return NextResponse.json(
         { success: false, error: "Folder not found" },
         { status: 404 },
       );
-    }
 
-    await recursiveDeleteFolderContent(folderUuid, userId);
+    await deleteFolderRecursively(folderUuid, userId);
 
-    return NextResponse.json({
-      success: true,
-      message: "Folder and all contents deleted successfully.",
-    });
+    return NextResponse.json({ success: true, error: null }, { status: 200 });
   } catch (error) {
-    console.error("Server Error:", error);
+    console.error(error);
     return NextResponse.json(
-      { success: false, error: "Internal Error" },
+      { success: false, error: "Failed to delete folder" },
       { status: 500 },
     );
   }

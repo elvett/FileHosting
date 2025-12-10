@@ -17,41 +17,48 @@ const ALLOWED_MIME_TYPES = [
   "audio/mpeg",
 ];
 
-export interface FilePreviewResponse {
+interface FilePreviewResponse {
+  success: boolean;
   url: string;
 }
 
-export interface FileDownloadError {
+interface FileDownloadError {
+  success: boolean;
   error: string;
 }
 
 type ApiResponse = FilePreviewResponse | FileDownloadError;
 
-interface RouteParams {
-  params: {
-    uuid: string;
-  };
-}
+type RouteParams = {
+  uuid: string;
+};
 
 export async function GET(
   req: NextRequest,
-  { params }: RouteParams,
+  context: { params: Promise<RouteParams> },
 ): Promise<NextResponse<ApiResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
-    const Params = await params;
-    const fileUuid = Params.uuid;
-    if (!fileUuid) {
-      return NextResponse.json({ error: "UUID is required" }, { status: 400 });
+
+    const { uuid } = await context.params;
+
+    if (!uuid) {
+      return NextResponse.json(
+        { success: false, error: "UUID is required" },
+        { status: 400 },
+      );
     }
 
     const file = await db.files.findUnique({
-      where: { uuid: fileUuid },
+      where: { uuid },
       select: {
         ownerId: true,
         private: true,
@@ -60,11 +67,17 @@ export async function GET(
     });
 
     if (!file) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "File not found" },
+        { status: 404 },
+      );
     }
 
     if (file.private && file.ownerId !== userId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 },
+      );
     }
 
     const fileMimeType = file.type?.toLowerCase();
@@ -72,6 +85,7 @@ export async function GET(
     if (!fileMimeType || !ALLOWED_MIME_TYPES.includes(fileMimeType)) {
       return NextResponse.json(
         {
+          success: false,
           error: `Preview is not available for this file type: ${fileMimeType}`,
         },
         { status: 400 },
@@ -80,15 +94,18 @@ export async function GET(
 
     const presignedUrl = await minioClient.presignedGetObject(
       FILES_BUCKET,
-      fileUuid,
+      uuid,
       EXPIRY_SECONDS,
     );
 
-    return NextResponse.json({ url: presignedUrl }, { status: 200 });
-  } catch (error) {
-    console.error("PREVIEW ERROR:", error);
     return NextResponse.json(
-      { error: "Failed to generate preview URL" },
+      { success: true, url: presignedUrl },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { success: false, error: "Failed to generate preview URL" },
       { status: 500 },
     );
   }

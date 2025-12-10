@@ -1,61 +1,69 @@
-import { NextResponse, NextRequest } from "next/server";
-import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
-interface RouteParams {
-  params: {
-    uuid: string;
-  };
+interface CreateFolderResponse {
+  success: boolean;
+  error: string | null;
+  uuid?: string;
 }
 
-interface FolderRequest {
-  name: string;
-}
+type RouteParams = {
+  uuid: string;
+};
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<RouteParams> },
+): Promise<NextResponse<CreateFolderResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const Params = await params;
-    let folderParentUuid: string | null = Params.uuid;
-    if (folderParentUuid === "home") {
-      folderParentUuid = null;
-    }
-
-    const folderName: FolderRequest = await req.json();
-    const folderUuid = uuidv4();
-
-    if (!folderName) {
+    if (!userId)
       return NextResponse.json(
-        { error: "No folder name provided" },
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+
+    const { uuid: parentUuidParam } = await context.params;
+
+    let parentUuid: string | null = parentUuidParam;
+    if (parentUuid === "home") {
+      parentUuid = null;
+    }
+
+    const body = await request.json();
+    const folderName = body?.name?.trim();
+
+    if (!folderName)
+      return NextResponse.json(
+        { success: false, error: "Folder name is required" },
         { status: 400 },
       );
-    }
 
-    const newFolder = await db.folder.create({
+    const uuid = uuidv4();
+
+    await db.folder.create({
       data: {
-        uuid: folderUuid,
+        uuid,
+        name: folderName,
         size: 0,
-        name: folderName.name,
         ownerId: userId,
-        parentUuid: folderParentUuid,
+        parentUuid,
       },
     });
 
-    return NextResponse.json({
-      status: "ok",
-      name: newFolder.name,
-      uuid: newFolder.uuid,
-      father: folderParentUuid,
-    });
+    return NextResponse.json(
+      { success: true, error: null, uuid },
+      { status: 200 },
+    );
   } catch (error) {
-    console.error("Server Error:", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

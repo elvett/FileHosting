@@ -5,60 +5,64 @@ import { db } from "@/lib/db";
 
 const FILES_BUCKET = process.env.FILES_BUCKET || "files";
 
-export interface FileRemoveResponse {
+interface FileRemoveResponse {
+  success: boolean;
   error: string | null;
 }
 
-interface RouteParams {
-  params: Promise<{
-    uuid: string;
-  }>;
-}
+type RouteParams = {
+  uuid: string;
+};
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams,
+  context: { params: Promise<RouteParams> },
 ): Promise<NextResponse<FileRemoveResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
+    if (!userId)
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const Params = await params;
-    const fileUuid = Params.uuid;
-
-    if (!fileUuid) {
-      return NextResponse.json({ error: "UUID is required" }, { status: 400 });
-    }
+    const { uuid } = await context.params;
+    if (!uuid)
+      return NextResponse.json(
+        { success: false, error: "UUID is required" },
+        { status: 400 },
+      );
 
     const file = await db.files.findUnique({
-      where: { uuid: fileUuid },
+      where: { uuid },
       select: { ownerId: true },
     });
-
-    if (!file) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
-    }
-
-    if (file.ownerId !== userId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
+    if (!file)
+      return NextResponse.json(
+        { success: false, error: "File not found" },
+        { status: 404 },
+      );
+    if (file.ownerId !== userId)
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 },
+      );
 
     try {
-      await minioClient.removeObject(FILES_BUCKET, fileUuid);
+      await minioClient.removeObject(FILES_BUCKET, uuid);
     } catch {
       console.error("MinIO remove error:");
     }
 
-    await db.files.delete({
-      where: { uuid: fileUuid },
-    });
+    await db.files.delete({ where: { uuid } });
 
-    return NextResponse.json({ error: null }, { status: 200 });
+    return NextResponse.json({ success: true, error: null }, { status: 200 });
   } catch (error) {
-    console.error("File delete error:", error);
-    return NextResponse.json({ error: "File delete failed" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      { success: false, error: "File delete failed" },
+      { status: 500 },
+    );
   }
 }

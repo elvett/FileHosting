@@ -5,60 +5,59 @@ import { db } from "@/lib/db";
 
 const FILES_BUCKET = process.env.FILES_BUCKET || "files";
 
-export interface FileDownloadError {
-  error: string;
+interface FileDownloadResponse {
+  error: string | null;
 }
 
-type RouteParams = { uuid: string };
+type RouteParams = {
+  uuid: string;
+};
 
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   context: { params: Promise<RouteParams> },
-): Promise<NextResponse<FileDownloadError> | NextResponse> {
+): Promise<NextResponse<FileDownloadResponse> | NextResponse> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    const { uuid: fileUuid } = await context.params;
-    if (!fileUuid) {
+    const { uuid } = await context.params;
+    if (!uuid)
       return NextResponse.json({ error: "UUID is required" }, { status: 400 });
-    }
 
     const file = await db.files.findUnique({
-      where: { uuid: fileUuid },
+      where: { uuid },
       select: {
         name: true,
         ownerId: true,
         private: true,
       },
     });
-
-    if (!file) {
+    if (!file)
       return NextResponse.json({ error: "File not found" }, { status: 404 });
-    }
 
-    if (file.private && file.ownerId !== userId) {
+    if (file.private && file.ownerId !== userId)
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
 
-    const stream = await minioClient.getObject(FILES_BUCKET, fileUuid);
+    const stream = await minioClient.getObject(FILES_BUCKET, uuid);
     const chunks: Uint8Array[] = [];
     for await (const chunk of stream) {
       chunks.push(chunk as Uint8Array);
     }
 
-    const data = new Uint8Array(Buffer.concat(chunks));
+    const buffer = Buffer.concat(chunks);
     const fileName = encodeURIComponent(file.name);
 
-    return new NextResponse(data, {
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
         "Content-Type": "application/octet-stream",
+        "Content-Length": buffer.length.toString(),
         "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
   } catch (error) {
-    console.error("DOWNLOAD ERROR:", error);
+    console.error(error);
     return NextResponse.json(
       { error: "File download failed" },
       { status: 500 },

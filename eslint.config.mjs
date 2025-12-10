@@ -40,5 +40,7 @@ export default defineConfig([
     "components",
     "tests",
     ".stryker-tmp",
+    "cypress.config.ts",
+    "stryker.conf.mjs",
   ]),
 ]);

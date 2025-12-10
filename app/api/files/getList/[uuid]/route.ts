@@ -9,7 +9,7 @@ type FileEntry = {
   size: number;
   privacy: boolean;
   date: number;
-  folder?: any;
+  folder?: { uuid: string; name: string } | null;
 };
 
 type FolderEntry = {

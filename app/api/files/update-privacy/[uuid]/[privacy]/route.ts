@@ -1,64 +1,68 @@
-import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-interface FileShareParams {
-  params: {
-    uuid: string;
-    privacy: string;
-  };
+interface FileShareResponse {
+  success: boolean;
+  error: string | null;
 }
 
-interface FileShareSuccess {
-  message: string;
-}
-
-interface FileShareError {
-  error: string;
-}
+type RouteParams = {
+  uuid: string;
+  privacy: string;
+};
 
 export async function POST(
-  req: NextRequest,
-  { params }: FileShareParams,
-): Promise<NextResponse<FileShareSuccess | FileShareError>> {
+  request: NextRequest,
+  context: { params: Promise<RouteParams> },
+): Promise<NextResponse<FileShareResponse>> {
   try {
     const user = await getUserFromToken();
     const userId = user?.userId;
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!userId)
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
 
-    const Params = await params;
-    const fileUuid = Params.uuid;
-    const letprivacy = Params.privacy === "1";
+    const { uuid, privacy } = await context.params;
 
-    if (!fileUuid) {
-      return NextResponse.json({ error: "UUID is required" }, { status: 400 });
-    }
+    if (!uuid)
+      return NextResponse.json(
+        { success: false, error: "UUID is required" },
+        { status: 400 },
+      );
+
+    const isPrivate = privacy !== "1";
 
     const file = await db.files.findUnique({
-      where: { uuid: fileUuid },
+      where: { uuid },
       select: { ownerId: true },
     });
 
-    if (!file) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
-    }
+    if (!file)
+      return NextResponse.json(
+        { success: false, error: "File not found" },
+        { status: 404 },
+      );
 
-    if (file.ownerId !== userId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
+    if (file.ownerId !== userId)
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 },
+      );
 
     await db.files.update({
-      where: { uuid: fileUuid },
-      data: { private: letprivacy },
+      where: { uuid },
+      data: { private: isPrivate },
     });
 
-    return NextResponse.json({ message: "File privacy update " + letprivacy });
-  } catch (err) {
+    return NextResponse.json({ success: true, error: null }, { status: 200 });
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { success: false, error: "Internal server error" },
       { status: 500 },
     );
   }

@@ -1,100 +1,92 @@
-import { NextResponse, NextRequest } from "next/server";
-import { db } from "@/lib/db";
-import { minioClient } from "@/lib/minio";
-import { v4 as uuidv4 } from "uuid";
+import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/auth";
+import { minioClient } from "@/lib/minio";
+import { db } from "@/lib/db";
+import { v4 as uuidv4 } from "uuid";
 
-interface RouteParams {
-  params: {
-    uuid: string;
-  };
-}
+const FILES_BUCKET = process.env.FILES_BUCKET || "files";
 
 interface UploadResponse {
-  message?: string;
-  error?: string;
   success: boolean;
+  error: string | null;
+  uuid?: string;
 }
 
+type RouteParams = {
+  uuid: string;
+};
+
 export async function POST(
-  req: NextRequest,
-  { params }: RouteParams,
+  request: NextRequest,
+  context: { params: Promise<RouteParams> },
 ): Promise<NextResponse<UploadResponse>> {
   try {
-    const user = await getUserFromToken();
-    const userId = user?.userId;
+  const user = await getUserFromToken();
+  const userId = user?.userId;
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
+  if (!userId)
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
 
-    const Params = await params;
-    let folderUuid: string | null = Params.uuid;
-    if (folderUuid === "home") {
-      folderUuid = null;
-    }
+  const { uuid: folderUuidParam } = await context.params;
 
-    if (folderUuid !== null) {
-      const folder = await db.folder.findUnique({
-        where: {
-          uuid: folderUuid,
-          ownerId: userId,
-        },
-      });
+  let folderUuid: string | null = folderUuidParam;
+  if (folderUuid === "home") {
+    folderUuid = null;
+  }
 
-      if (!folder) {
-        return NextResponse.json(
-          { success: false, error: "Folder not found" },
-          { status: 404 },
-        );
-      }
-    }
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-
-    if (!file) {
-      return NextResponse.json(
-        { success: false, error: "No file provided" },
-        { status: 400 },
-      );
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const uniqueName = uuidv4();
-    const FILESBUCKET = process.env.FILESBUCKET;
-
-    if (!FILESBUCKET) {
-      console.error("Environment variable FILESBUCKET is not set");
-      return NextResponse.json(
-        { success: false, error: "Server configuration error" },
-        { status: 500 },
-      );
-    }
-
-    await minioClient.putObject(FILESBUCKET, uniqueName, buffer, file.size, {
-      "Content-Type": file.type,
-    });
-
-    const newFile = await db.files.create({
-      data: {
-        folderUuid,
-        name: file.name,
-        uuid: uniqueName,
-        size: file.size,
-        type: file.type,
+  if (folderUuid !== null) {
+    const folder = await db.folder.findUnique({
+      where: {
+        uuid: folderUuid,
         ownerId: userId,
       },
     });
 
-    return NextResponse.json({ success: true, uuid: newFile.uuid });
-  } catch (error) {
-    console.error("Server Error:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal Error" },
-      { status: 500 },
-    );
+    if (!folder)
+      return NextResponse.json(
+        { success: false, error: "Folder not found" },
+        { status: 404 },
+      );
   }
-}
+
+  const formData = await request.formData();
+  const file = formData.get("file") as File | null;
+
+  if (!file)
+    return NextResponse.json(
+      { success: false, error: "No file provided" },
+      { status: 400 },
+    );
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const uuid = uuidv4();
+
+  await minioClient.putObject(FILES_BUCKET, uuid, buffer, file.size, {
+    "Content-Type": file.type,
+  });
+
+  const newFile = await db.files.create({
+    data: {
+      folderUuid,
+      name: file.name,
+      uuid,
+      size: file.size,
+      type: file.type,
+      ownerId: userId,
+    },
+  });
+
+  return NextResponse.json(
+    { success: true, error: null, uuid: newFile.uuid },
+    { status: 200 },
+  );
+} catch (error) {
+  console.error(error);
+  return NextResponse.json(
+    { success: false, error: "Internal server error" },
+    { status: 500 },
+  );
+}}

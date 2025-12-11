@@ -1,5 +1,5 @@
 describe("File and Folder Operations", () => {
-  const FOLDER_ENDPOINT = "/api/folders/removeFolder/*";
+  const FOLDER_ENDPOINT = "/api/fs/folders/removeFolder/*";
 
   beforeEach(() => {
     cy.intercept("DELETE", FOLDER_ENDPOINT).as("removeFolder");

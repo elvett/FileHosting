@@ -30,7 +30,7 @@ export function BreadcrumbWithApi({ folderUuid }: BreadcrumbWithApiProps) {
     async function fetchPath() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/folders/getPath/${folderUuid}`);
+        const res = await fetch(`/api/fs/folders/getPath/${folderUuid}`);
         const data = await res.json();
         if (data.success) {
           setBreadcrumbs(data.path);

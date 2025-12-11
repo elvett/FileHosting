@@ -57,7 +57,7 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
     });
 
     try {
-      const response = await fetch(`/api/files/upload/${folderUuid}`, {
+      const response = await fetch(`/api/fs/files/upload/${folderUuid}`, {
         method: "POST",
         body: formData,
       });
@@ -85,7 +85,7 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
     });
 
     try {
-      const response = await fetch(`/api/folders/createFolder/${folderUuid}`, {
+      const response = await fetch(`/api/fs/folders/createFolder/${folderUuid}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: folderName.trim() }),

@@ -70,7 +70,7 @@ export default function AuthPage() {
         }
       }
 
-      const endpoint = `/api/${mode}`;
+      const endpoint = `/api/user/${mode}`;
       const body =
         mode === "login"
           ? { uniqName, password }

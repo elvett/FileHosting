@@ -1,5 +1,5 @@
-import { POST as registerPOST } from "@/app/api/register/route";
-import { POST as loginPOST } from "@/app/api/login/route";
+import { POST as registerPOST } from "@/app/api/user/register/route";
+import { POST as loginPOST } from "@/app/api/user/login/route";
 import { describe, it, expect, beforeEach } from "vitest";
 import { db } from "@/lib/db";
 import { NextRequest } from "next/server";
@@ -23,7 +23,7 @@ describe("Auth Integration Flow", () => {
     const email = "login_test@mail.com";
 
     const registerRes = await registerPOST(
-      createRequest("http://localhost/api/register", {
+      createRequest("http://localhost/api/user/register", {
         uniqName: username,
         password: password,
         email: email,
@@ -32,7 +32,7 @@ describe("Auth Integration Flow", () => {
     expect(registerRes.status).toBe(200);
 
     const loginRes = await loginPOST(
-      createRequest("http://localhost/api/login", {
+      createRequest("http://localhost/api/user/login", {
         uniqName: username,
         password: password,
       }),
@@ -47,7 +47,7 @@ describe("Auth Integration Flow", () => {
 
   it("should return 401 fail login password is wrong", async () => {
     await registerPOST(
-      createRequest("http://localhost/api/register", {
+      createRequest("http://localhost/api/user/register", {
         uniqName: "fail_test",
         password: "correct_password",
         email: "fail@mail.com",
@@ -55,7 +55,7 @@ describe("Auth Integration Flow", () => {
     );
 
     const loginRes = await loginPOST(
-      createRequest("http://localhost/api/login", {
+      createRequest("http://localhost/api/user/login", {
         uniqName: "fail_test",
         password: "wrong_password",
       }),

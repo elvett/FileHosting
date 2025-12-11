@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const TEST_JWT_SECRET = "super-secret-test-jwt-1234567890";
 const FILES_BUCKET = "test-files-bucket";
-const BASE_URL = "http://localhost/api/files/upload";
+const BASE_URL = "http://localhost/api/fs/files/upload";
 
 let currentTestToken: string | undefined = undefined;
 
@@ -50,7 +50,7 @@ describe("Upload API Integration Flow", () => {
     process.env.JWT_SECRET = TEST_JWT_SECRET;
     process.env.FILESBUCKET = FILES_BUCKET;
 
-    const route = await import("@/app/api/files/upload/[uuid]/route");
+    const route = await import("@/app/api/fs/files/upload/[uuid]/route");
     POST = route.POST;
 
     const ownerHash = await bcrypt.hash("test123", 10);

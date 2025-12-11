@@ -30,7 +30,7 @@ export default function TablePage({ folderUuid }: TablePageProps) {
   const fetchFiles = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/files/getList/${folderUuid}`);
+      const res = await fetch(`/api/fs/files/getList/${folderUuid}`);
       if (!res.ok) throw new Error(`Error: ${res.status}`);
       const json = await res.json();
 

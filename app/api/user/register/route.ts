@@ -59,7 +59,7 @@ export async function POST(
       userId: user.id,
     });
   } catch (error) {
-    console.error("error in /api/register:", error);
+    console.error("error in /api/user/register:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

@@ -29,7 +29,6 @@ interface Sidebar {
   folderUuid: string;
 }
 
-// This is sample data.
 const data = {
   user: {
     name: "shadcn",
@@ -38,7 +37,7 @@ const data = {
   },
   navMain: [
     {
-      title: "MAin",
+      title: "Main",
       url: "#",
       icon: SquareTerminal,
     },
@@ -56,23 +55,6 @@ const data = {
       title: "Settings",
       url: "#",
       icon: Settings2,
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 };

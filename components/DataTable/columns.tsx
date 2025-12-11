@@ -48,14 +48,14 @@ export type File = {
 };
 
 const handleDownload = (uuid: string, filename: string) => {
-  const downloadUrl = `/api/files/download/${uuid}`;
+  const downloadUrl = `/api/fs/files/download/${uuid}`;
   window.location.href = downloadUrl;
   toast.success(`Download of "${filename}" started.`);
 };
 
 const handlePreview = async (uuid: string, filename: string) => {
   try {
-    const res = await fetch(`/api/files/preview/${uuid}`);
+    const res = await fetch(`/api/fs/files/preview/${uuid}`);
     const data = await res.json();
 
     if (!res.ok || !data.url) {
@@ -157,7 +157,7 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
 
       const updatePrivacy = async () => {
         await fetch(
-          `/api/files/update-privacy/${item.uuid}/${isPublic ? 0 : 1}`,
+          `/api/fs/files/update-privacy/${item.uuid}/${isPublic ? 0 : 1}`,
           { method: "POST" },
         );
 
@@ -169,8 +169,8 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
       const removeItem = async () => {
         const endpoint =
           item.kind === "folder"
-            ? "/api/folders/removeFolder"
-            : "/api/files/remove";
+            ? "/api/fs/folders/removeFolder"
+            : "/api/fs/files/remove";
 
         await fetch(`${endpoint}/${item.uuid}`, { method: "DELETE" });
 
@@ -230,7 +230,7 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
                     <Label>Public link</Label>
                     <Input
                       readOnly
-                      value={`${window.location.origin}/api/files/download/${item.uuid}`}
+                      value={`${window.location.origin}/api/fs/files/download/${item.uuid}`}
                     />
                   </div>
 

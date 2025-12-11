@@ -24,17 +24,17 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { getUserFromToken } from "@/lib/auth";
 
 interface Sidebar {
   folderUuid: string;
 }
 
+const response = await fetch("/api/user/getData");
+const user = {
+  name: (await response.json()).user.uniqName as string,
+};
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Main",
@@ -72,7 +72,7 @@ export function AppSidebar({
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

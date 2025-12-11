@@ -34,8 +34,7 @@ const response = await fetch("/api/user/getData");
 const user = {
   name: (await response.json()).user.uniqName as string,
 };
-const data = {
-  navMain: [
+const navMain = [
     {
       title: "Main",
       url: "#",
@@ -56,8 +55,7 @@ const data = {
       url: "#",
       icon: Settings2,
     },
-  ],
-};
+];
 
 export function AppSidebar({
   folderUuid,
@@ -69,7 +67,7 @@ export function AppSidebar({
         <Uploadfile folderUuid={folderUuid}></Uploadfile>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

@@ -64,7 +64,7 @@ export default async function setup() {
       await pgContainer.stop();
     };
   } catch (error) {
-    console.error("❌ Global setup failed", error);
+    console.error("Global setup failed", error);
     if (minioContainer) await minioContainer.stop();
     if (pgContainer) await pgContainer.stop();
     throw error;

@@ -39,6 +39,7 @@ export default defineConfig([
     "next-env.d.ts",
     "components",
     "tests",
+    "cypress",
     ".stryker-tmp",
     "cypress.config.ts",
     "stryker.conf.mjs",

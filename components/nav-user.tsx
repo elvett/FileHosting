@@ -123,7 +123,7 @@ export function NavUser({ user, className }: NavUserProps) {
             variant="ghost"
             className={cn(
               "relative h-8 w-8 rounded-full flex items-center justify-center",
-              className
+              className,
             )}
           >
             <User className="h-5 w-5" />
@@ -133,9 +133,7 @@ export function NavUser({ user, className }: NavUserProps) {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">
-                {user.name}
-              </p>
+              <p className="text-sm font-medium leading-none">{user.name}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -212,9 +210,7 @@ export function NavUser({ user, className }: NavUserProps) {
                 className={error ? "border-red-500" : ""}
                 disabled={isLoading}
               />
-              {error && (
-                <p className="text-sm text-red-600 mt-1">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
             </div>
             <div className="rounded-lg bg-red-50 p-3">
               <p className="text-sm text-red-800">

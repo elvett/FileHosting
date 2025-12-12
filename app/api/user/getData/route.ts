@@ -18,30 +18,30 @@ export async function GET(
 
     if (!user) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Invalid token", 
-          user: null 
+        {
+          success: false,
+          error: "Invalid token",
+          user: null,
         },
         { status: 401 },
       );
     }
 
     return NextResponse.json(
-      { 
-        success: true, 
-        error: null, 
-        user
+      {
+        success: true,
+        error: null,
+        user,
       },
       { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching user data:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Internal server error", 
-        user: null 
+      {
+        success: false,
+        error: "Internal server error",
+        user: null,
       },
       { status: 500 },
     );

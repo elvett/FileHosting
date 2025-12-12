@@ -85,11 +85,14 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
     });
 
     try {
-      const response = await fetch(`/api/fs/folders/createFolder/${folderUuid}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: folderName.trim() }),
-      });
+      const response = await fetch(
+        `/api/fs/folders/createFolder/${folderUuid}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: folderName.trim() }),
+        },
+      );
       if (!response.ok) throw new Error("Folder creation failed");
       const data = await response.json();
 

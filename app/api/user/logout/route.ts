@@ -11,10 +11,10 @@ export async function POST(
 ): Promise<NextResponse<LogoutResponse>> {
   try {
     const response = NextResponse.json(
-      { 
-        success: true, 
-        error: null, 
-        message: "Logged out successfully" 
+      {
+        success: true,
+        error: null,
+        message: "Logged out successfully",
       },
       { status: 200 },
     );
@@ -36,14 +36,13 @@ export async function POST(
     });
 
     return response;
-
   } catch (error) {
     console.error("Error during logout:", error);
-    
+
     const errorResponse = NextResponse.json(
-      { 
-        success: false, 
-        error: "Error during logout process" 
+      {
+        success: false,
+        error: "Error during logout process",
       },
       { status: 500 },
     );

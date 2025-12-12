@@ -35,26 +35,26 @@ const user = {
   name: (await response.json()).user.uniqName as string,
 };
 const navMain = [
-    {
-      title: "Main",
-      url: "#",
-      icon: SquareTerminal,
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-    },
+  {
+    title: "Main",
+    url: "#",
+    icon: SquareTerminal,
+  },
+  {
+    title: "Models",
+    url: "#",
+    icon: Bot,
+  },
+  {
+    title: "Documentation",
+    url: "#",
+    icon: BookOpen,
+  },
+  {
+    title: "Settings",
+    url: "#",
+    icon: Settings2,
+  },
 ];
 
 export function AppSidebar({

@@ -62,7 +62,7 @@ export async function DELETE(
     }
 
     const topLevelFolders = await db.folder.findMany({
-      where: { 
+      where: {
         ownerId: userId,
         parentUuid: null,
       },
@@ -74,7 +74,7 @@ export async function DELETE(
     }
 
     const orphanFiles = await db.files.findMany({
-      where: { 
+      where: {
         ownerId: userId,
         folderUuid: null,
       },
@@ -90,7 +90,7 @@ export async function DELETE(
       }
 
       await db.files.deleteMany({
-        where: { 
+        where: {
           ownerId: userId,
           folderUuid: null,
         },
@@ -102,10 +102,10 @@ export async function DELETE(
     });
 
     const response = NextResponse.json(
-      { 
-        success: true, 
-        error: null, 
-        message: "User and all associated data deleted successfully" 
+      {
+        success: true,
+        error: null,
+        message: "User and all associated data deleted successfully",
       },
       { status: 200 },
     );
@@ -119,11 +119,13 @@ export async function DELETE(
     });
 
     return response;
-
   } catch (error) {
     console.error("Error removing user:", error);
-    
-    if (error instanceof Error && error.message.includes("Record to delete does not exist")) {
+
+    if (
+      error instanceof Error &&
+      error.message.includes("Record to delete does not exist")
+    ) {
       return NextResponse.json(
         { success: false, error: "User not found" },
         { status: 404 },

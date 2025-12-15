@@ -9,7 +9,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./"),
     },
-    include: ["**/*.test.ts"],
+    include: ["tests/**/*.test.ts"],
+    exclude: ["node_modules/**", "dist/**"],
     hookTimeout: 60000,
   },
 });

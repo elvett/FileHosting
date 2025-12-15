@@ -43,5 +43,6 @@ export default defineConfig([
     ".stryker-tmp",
     "cypress.config.ts",
     "stryker.conf.mjs",
+    "stryker.conf.json"
   ]),
 ]);

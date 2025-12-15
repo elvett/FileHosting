@@ -15,7 +15,7 @@ describe("File and Folder Operations", () => {
     const folderName = `Folder_to_Delete_${Date.now()}`;
 
     cy.contains("span", "New").click();
-    cy.contains("span", "Create Folder").click();
+    cy.contains("span", "New Folder").click();
 
     cy.get('input[placeholder="Folder name"]')
       .should("be.visible")

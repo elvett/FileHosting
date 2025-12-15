@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "test": "ENV_FILE=.env.test vitest"
+    "test": "ENV_FILE=.env.test vitest run",
+    "test:e2e": "npm run start & SERVER_PID=$! && npx wait-on http://localhost:3000 && npx cypress run; kill $SERVER_PID"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

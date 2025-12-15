@@ -1,7 +1,13 @@
 "use client";
 
-import * as React from "react";
-import { ChevronsUpDown, Plus, Upload, FolderPlus } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import {
+  ChevronsUpDown,
+  Plus,
+  Upload,
+  FolderPlus,
+  FolderUp,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,51 +40,127 @@ interface UploadfileProps {
 
 export function Uploadfile({ folderUuid }: UploadfileProps) {
   const { isMobile } = useSidebar();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [folderName, setFolderName] = React.useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [folderName, setFolderName] = useState("");
 
   const triggerRefresh = useRefreshSignal();
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const toastId = toast.loading("Uploading...", {
-      description: "Please wait",
-    });
-
-    try {
-      const response = await fetch(`/api/fs/files/upload/${folderUuid}`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) throw new Error("Upload failed");
-      await response.json();
-
-      toast.success("Success", {
-        id: toastId,
-        description: "File uploaded successfully",
-      });
-
-      triggerRefresh();
-    } catch (error) {
-      toast.error("Error", { id: toastId, description: "File upload failed" });
-    } finally {
-      e.target.value = "";
+  const handleUploadClick = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
-  };
+  }, []);
 
-  const handleCreateFolder = async () => {
-    if (!folderName.trim()) return;
+  const handleUploadFolderClick = useCallback(() => {
+    if (folderInputRef.current) {
+      folderInputRef.current.click();
+    }
+  }, []);
+
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const toastId = toast.loading("Uploading file...", {
+        description: "Please wait",
+      });
+
+      try {
+        const response = await fetch(`/api/fs/files/upload/${folderUuid}`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Upload failed");
+        }
+
+        toast.success("Success", {
+          id: toastId,
+          description: "File uploaded successfully",
+        });
+
+        triggerRefresh();
+      } catch (error: any) {
+        toast.error("Error", {
+          id: toastId,
+          description: error.message || "File upload failed",
+        });
+      } finally {
+        if (e.target) {
+          e.target.value = "";
+        }
+      }
+    },
+    [folderUuid, triggerRefresh],
+  );
+
+  const handleFolderChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      const formData = new FormData();
+      let fileCount = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const webkitPath = (file as any).webkitRelativePath;
+        const relativePath = webkitPath || file.name;
+
+        formData.append(`file_${i}`, file);
+        formData.append(`file_${i}_path`, relativePath);
+        fileCount++;
+      }
+
+      const toastId = toast.loading("Uploading folder...", {
+        description: `Uploading ${fileCount} files`,
+      });
+
+      try {
+        const response = await fetch(`/api/fs/folders/upload/${folderUuid}`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Folder upload failed");
+        }
+
+        toast.success("Success", {
+          id: toastId,
+          description: data.message || "Folder uploaded successfully",
+        });
+
+        triggerRefresh();
+      } catch (error: any) {
+        toast.error("Error", {
+          id: toastId,
+          description: error.message || "Folder upload failed",
+        });
+      } finally {
+        if (e.target) {
+          e.target.value = "";
+        }
+      }
+    },
+    [folderUuid, triggerRefresh],
+  );
+
+  const handleCreateFolder = useCallback(async () => {
+    const trimmedName = folderName.trim();
+    if (!trimmedName) return;
 
     const toastId = toast.loading("Creating folder...", {
       description: "Please wait",
@@ -90,29 +172,46 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: folderName.trim() }),
+          body: JSON.stringify({ name: trimmedName }),
         },
       );
-      if (!response.ok) throw new Error("Folder creation failed");
+
       const data = await response.json();
 
-      toast.success(`Folder "${data.name}" created`, { id: toastId });
+      if (!response.ok) {
+        throw new Error(data.error || "Folder creation failed");
+      }
+
+      toast.success("Folder created", { id: toastId });
       setFolderName("");
       setIsDialogOpen(false);
 
       triggerRefresh();
-    } catch (error) {
-      toast.error("Folder creation failed", { id: toastId });
+    } catch (error: any) {
+      toast.error(error.message || "Folder creation failed", { id: toastId });
     }
-  };
+  }, [folderName, folderUuid, triggerRefresh]);
 
   return (
     <>
       <input
         ref={fileInputRef}
         type="file"
-        className="hidden"
+        style={{ display: "none" }}
         onChange={handleFileChange}
+      />
+
+      <input
+        ref={folderInputRef}
+        type="file"
+        style={{ display: "none" }}
+        multiple
+        onChange={handleFolderChange}
+        {...({
+          webkitdirectory: "",
+          directory: "",
+          mozdirectory: "",
+        } as any)}
       />
 
       <SidebarMenu>
@@ -139,11 +238,11 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
               side={isMobile ? "bottom" : "right"}
               sideOffset={4}
             >
-              <DropdownMenuLabel>New File</DropdownMenuLabel>
+              <DropdownMenuLabel>Upload</DropdownMenuLabel>
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
-                onSelect={(e) => {
+                onClick={(e) => {
                   e.preventDefault();
                   handleUploadClick();
                 }}
@@ -153,13 +252,27 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                onSelect={(e) => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleUploadFolderClick();
+                }}
+              >
+                <FolderUp className="mr-2 size-4" />
+                <span>Upload Folder</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Create</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={(e) => {
                   e.preventDefault();
                   setIsDialogOpen(true);
                 }}
               >
                 <FolderPlus className="mr-2 size-4" />
-                <span>Create Folder</span>
+                <span>New Folder</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -176,14 +289,26 @@ export function Uploadfile({ folderUuid }: UploadfileProps) {
             placeholder="Folder name"
             value={folderName}
             onChange={(e) => setFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleCreateFolder();
+              }
+            }}
             autoFocus
           />
 
           <DialogFooter className="mt-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              type="button"
+            >
               Cancel
             </Button>
-            <Button onClick={handleCreateFolder}>Create</Button>
+            <Button onClick={handleCreateFolder} type="button">
+              Create
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

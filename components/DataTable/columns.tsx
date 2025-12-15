@@ -47,8 +47,15 @@ export type File = {
   kind: "file" | "folder";
 };
 
-const handleDownload = (uuid: string, filename: string) => {
-  const downloadUrl = `/api/fs/files/download/${uuid}`;
+const handleDownload = (
+  uuid: string,
+  filename: string,
+  isFolder: boolean = false,
+) => {
+  const downloadUrl = isFolder
+    ? `/api/fs/folders/download/${uuid}`
+    : `/api/fs/files/download/${uuid}`;
+
   window.location.href = downloadUrl;
   toast.success(`Download of "${filename}" started.`);
 };
@@ -128,7 +135,9 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
     header: "Public",
     cell: ({ row }) =>
       row.original.kind === "folder"
-        ? "—"
+        ? row.original.privacy
+          ? "No"
+          : "Yes"
         : row.original.privacy
           ? "No"
           : "Yes",
@@ -156,12 +165,18 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
       const [isPublic, setIsPublic] = useState(!item.privacy);
 
       const updatePrivacy = async () => {
-        await fetch(
-          `/api/fs/files/update-privacy/${item.uuid}/${isPublic ? 0 : 1}`,
-          { method: "POST" },
-        );
+        const endpoint =
+          item.kind === "folder"
+            ? `/api/fs/folders/update-privacy/${item.uuid}/${isPublic ? 0 : 1}`
+            : `/api/fs/files/update-privacy/${item.uuid}/${isPublic ? 0 : 1}`;
 
-        toast.success("Share settings updated.");
+        await fetch(endpoint, { method: "POST" });
+
+        toast.success(
+          item.kind === "folder"
+            ? "Folder and all contents share settings updated."
+            : "Share settings updated.",
+        );
         refetch();
         setShareOpen(false);
       };
@@ -192,21 +207,19 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-              {item.kind === "file" && (
-                <>
-                  <DropdownMenuItem
-                    onClick={() => handleDownload(item.uuid!, item.name)}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  handleDownload(item.uuid!, item.name, item.kind === "folder")
+                }
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {item.kind === "folder" ? "Download as ZIP" : "Download"}
+              </DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={() => setShareOpen(true)}>
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share
-                  </DropdownMenuItem>
-                </>
-              )}
+              <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={removeItem}
@@ -218,34 +231,40 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {item.kind === "file" && (
-            <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Share: {item.name}</DialogTitle>
-                </DialogHeader>
+          <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Share: {item.name}</DialogTitle>
+              </DialogHeader>
 
-                <div className="space-y-4 py-4">
-                  <div>
-                    <Label>Public link</Label>
-                    <Input
-                      readOnly
-                      value={`${window.location.origin}/api/fs/files/download/${item.uuid}`}
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-                    <Label>Make public (Anyone with the link can view)</Label>
-                  </div>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label>Public link</Label>
+                  <Input
+                    readOnly
+                    value={
+                      item.kind === "folder"
+                        ? `${window.location.origin}/api/fs/folders/download/${item.uuid}`
+                        : `${window.location.origin}/api/fs/files/download/${item.uuid}`
+                    }
+                  />
                 </div>
 
-                <DialogFooter>
-                  <Button onClick={updatePrivacy}>Save</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
+                <div className="flex items-center space-x-2">
+                  <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+                  <Label>
+                    {item.kind === "folder"
+                      ? "Make public (Anyone with the link can download this folder and all its contents)"
+                      : "Make public (Anyone with the link can view)"}
+                  </Label>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button onClick={updatePrivacy}>Save</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       );
     },

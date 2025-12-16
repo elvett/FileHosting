@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
   Command,
@@ -26,14 +25,6 @@ import {
 } from "@/components/ui/sidebar";
 import { getUserFromToken } from "@/lib/auth";
 
-interface Sidebar {
-  folderUuid: string;
-}
-
-const response = await fetch("/api/user/getData");
-const user = {
-  name: (await response.json()).user.uniqName as string,
-};
 const navMain = [
   {
     title: "Main",
@@ -57,21 +48,52 @@ const navMain = [
   },
 ];
 
-export function AppSidebar({
-  folderUuid,
-  ...props
-}: { folderUuid: string } & React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  folderUuid: string;
+}
+
+interface UserData {
+  name: string;
+}
+
+export function AppSidebar({ folderUuid, ...props }: AppSidebarProps) {
+  const [user, setUser] = React.useState<UserData | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    fetch("/api/user/getData", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load user");
+        return res.json();
+      })
+      .then((data) => {
+        if (mounted && data?.user?.uniqName) {
+          setUser({ name: data.user.uniqName });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <Uploadfile folderUuid={folderUuid}></Uploadfile>
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={user} />
-      </SidebarFooter>
+
+      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );

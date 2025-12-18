@@ -1,0 +1,86 @@
+pipeline {
+    agent any
+
+    environment {
+        NODE_VERSION = '20'
+        APP_DIR      = '/root/test/FileHosting'
+        PM2_APP_NAME = 'file-hosting'
+        SSH_USER     = 'root'
+        SSH_HOST     = '109.205.182.236'
+        JWT_SECRET   = 'testsecret'
+        GITHUB_TOKEN = credentials('github-token')
+    }
+
+    options {
+        skipDefaultCheckout(true)
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                githubNotify context: 'CI / Jenkins',
+                             description: 'Build started',
+                             status: 'PENDING'
+
+                git branch: 'main',
+                    url: 'https://github.com/elvett/FileHosting.git'
+            }
+        }
+
+        stage('CI: Test') {
+            steps {
+                sh '''
+                    npm ci
+                    npm run test
+                '''
+            }
+        }
+
+        stage('CI: Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('CD: Deploy') {
+            steps {
+                sshagent(credentials: ['SSH']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} bash -s <<'BASH_EOF'
+                    set -e
+
+                    cd "${APP_DIR}"
+
+                    git pull origin main
+                    npm ci
+                    npm run build
+                    npm install --omit=dev
+
+                    pm2 stop ${PM2_APP_NAME} || true
+                    pm2 delete ${PM2_APP_NAME} || true
+                    pm2 start npm --name ${PM2_APP_NAME} -- start
+                    pm2 save
+BASH_EOF
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            githubNotify context: 'CI / Jenkins',
+                         description: 'Build passed',
+                         status: 'SUCCESS'
+        }
+        failure {
+            githubNotify context: 'CI / Jenkins',
+                         description: 'Build failed',
+                         status: 'FAILURE'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

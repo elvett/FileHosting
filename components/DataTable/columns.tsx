@@ -251,7 +251,7 @@ export const columns = (refetch: () => void): ColumnDef<File>[] => [
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+                  <Switch checked={!isPublic} onCheckedChange={setIsPublic} />
                   <Label>
                     {item.kind === "folder"
                       ? "Make public (Anyone with the link can download this folder and all its contents)"

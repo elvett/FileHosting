@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Your App",
-  description: "File storage with style",
+  title: "File-Hosting",
+  description: "File storage",
 };
 
 export default function RootLayout({
